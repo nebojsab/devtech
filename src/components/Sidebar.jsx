@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   List,
@@ -30,6 +31,8 @@ const menuItems = [
 ];
 
 function Sidebar() {
+  const navigate = useNavigate();
+
   return (
     <Box
       sx={{
@@ -54,6 +57,11 @@ function Sidebar() {
         {menuItems.map((item, index) => (
           <ListItem
             key={index}
+            onClick={() => {
+              if (item.label === 'Companies') {
+                navigate('/');
+              }
+            }}
             sx={{
               bgcolor: item.active ? '#f0f0f0' : 'transparent',
               borderLeft: item.active ? '3px solid #333' : 'none',

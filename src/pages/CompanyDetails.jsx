@@ -46,6 +46,7 @@ function CompanyDetails() {
   const currentPriceListNames = (company?.currentPriceListIds || []).map(
     (priceListId) => getPriceListById(company.resellerId, priceListId)?.name || priceListId,
   );
+  const auditTabIndex = company?.type === 'Reseller' ? 6 : 5;
 
   const moveHistory = moveHistoryByCustomer[company?.id] || [];
 
@@ -79,7 +80,7 @@ function CompanyDetails() {
       const result = moveCustomer(payload);
       setSuccessMessage(result.message);
       closeMoveDialog();
-      setTabValue(6);
+      setTabValue(auditTabIndex);
     } catch (error) {
       if (error.message === 'TECHNICAL_MOVE_ERROR') {
         setMoveError('We couldn’t complete the move. Please try again or contact support.');
@@ -125,7 +126,7 @@ function CompanyDetails() {
                   component="button"
                   underline="hover"
                   sx={{ fontSize: 13 }}
-                  onClick={() => setTabValue(6)}
+                  onClick={() => setTabValue(auditTabIndex)}
                 >
                   View audit history
                 </Link>
@@ -314,13 +315,13 @@ function CompanyDetails() {
         </Box>
       )}
 
-      {tabValue !== 0 && tabValue !== 6 && (
+      {tabValue !== 0 && tabValue !== auditTabIndex && (
         <Box sx={{ p: 3, textAlign: 'center', width: '100%' }}>
           <Typography sx={{ color: '#999' }}>Content for this tab coming soon...</Typography>
         </Box>
       )}
 
-      {tabValue === 6 && (
+      {tabValue === auditTabIndex && (
         <Paper sx={{ p: 3, border: '1px solid #e0e0e0', boxShadow: 'none' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
             <TextField
