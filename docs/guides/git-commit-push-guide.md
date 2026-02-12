@@ -1,0 +1,64 @@
+# Git Commit & Push Guide
+
+## 1) Standardni tok rada
+
+1. Povuci poslednje izmene:
+   - `git pull origin main`
+2. Napravi izmene i proveri aplikaciju lokalno.
+3. Pokreni provere:
+   - `npm run lint`
+   - (po potrebi) `npm run build`
+4. Stage:
+   - `git add <fajlovi>` ili `git add -A`
+5. Commit:
+   - `git commit -m "Add ..."`
+6. Push:
+   - `git push origin main` (ili feature branch)
+
+## 2) Preporuka za commit poruke
+
+Koristi imperativ i jasan scope:
+
+- `Add move customer validation step`
+- `Fix audit tab active state after move`
+- `Refactor company context data mapping`
+
+Opcionalna forma sa prefiksima:
+
+- `feat: add move customer dialog flow`
+- `fix: correct router basename on GitHub Pages`
+- `docs: add UI and git contribution guides`
+
+## 3) Kada push na main, a kada branch + PR
+
+Push na `main`:
+
+- Sitne, niskorizične izmene
+- Hotfix koji je provereno bezbedan
+
+Feature branch + PR:
+
+- Veći UI/flow zahvati
+- Više fajlova i veći rizik regresije
+- Promene koje traže review više ljudi
+
+## 4) Brzi checklist pre push-a
+
+- `npm run lint` prolazi
+- Nema debug logova koji ne treba da ostanu
+- Poruke i labeli su konzistentni
+- Ručno testiran kritičan flow koji je menjan
+
+## 5) Korisne komande
+
+- Status: `git status`
+- Pregled izmena: `git diff`
+- Poslednji commit: `git log -1 --oneline`
+- Undo staged fajla: `git restore --staged <fajl>`
+- Undo local izmene fajla: `git restore <fajl>`
+
+## 6) Minimalna politika kvaliteta
+
+- Ne pushuj ako lint ne prolazi.
+- Ne mešaj nepovezane izmene u isti commit.
+- Drži commit-eve male i tematski fokusirane.

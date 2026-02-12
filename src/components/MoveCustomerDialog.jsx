@@ -32,6 +32,15 @@ function SummaryRow({ label, value }) {
   );
 }
 
+function StackedInfoRow({ label, value }) {
+  return (
+    <Box sx={{ py: 1.5 }}>
+      <Typography sx={{ fontSize: 12, color: '#999', fontWeight: 600, mb: 0.5 }}>{label}</Typography>
+      <Typography sx={{ fontSize: 16, color: '#333' }}>{value}</Typography>
+    </Box>
+  );
+}
+
 function MoveCustomerDialog({
   open,
   onClose,
@@ -46,7 +55,6 @@ function MoveCustomerDialog({
   const [step, setStep] = useState(1);
   const [selectedReseller, setSelectedReseller] = useState(null);
   const [selectedPriceListIds, setSelectedPriceListIds] = useState([]);
-  const [missingServices, setMissingServices] = useState([]);
   const [acknowledgedImpact, setAcknowledgedImpact] = useState(false);
 
   const destinationPriceLists = useMemo(() => selectedReseller?.priceLists || [], [selectedReseller]);
@@ -64,19 +72,16 @@ function MoveCustomerDialog({
 
   const selectedPriceListNames = selectedPriceLists.map((priceList) => priceList.name);
 
-  const validateCoverage = () => {
-    const availableServiceIds = new Set(selectedPriceLists.flatMap((priceList) => priceList.services.map((service) => service.id)));
-
-    const notCovered = (customer?.services || []).filter((service) => !availableServiceIds.has(service.id));
-    setMissingServices(notCovered);
-
-    if (notCovered.length > 0) {
-      setStep(4);
-      return false;
+  const missingServices = useMemo(() => {
+    if (effectiveSelectedPriceListIds.length === 0) {
+      return [];
     }
 
-    return true;
-  };
+    const availableServiceIds = new Set(selectedPriceLists.flatMap((priceList) => priceList.services.map((service) => service.id)));
+    return (customer?.services || []).filter((service) => !availableServiceIds.has(service.id));
+  }, [customer?.services, effectiveSelectedPriceListIds, selectedPriceLists]);
+
+  const hasCoverageConflict = effectiveSelectedPriceListIds.length > 0 && missingServices.length > 0;
 
   const goNext = () => {
     clearMoveError?.();
@@ -87,29 +92,12 @@ function MoveCustomerDialog({
     }
 
     if (step === 2) {
-      if (!selectedReseller) {
+      if (!selectedReseller || effectiveSelectedPriceListIds.length === 0 || hasCoverageConflict) {
         return;
       }
 
       setStep(3);
       return;
-    }
-
-    if (step === 3) {
-      if (effectiveSelectedPriceListIds.length === 0) {
-        return;
-      }
-
-      if (!validateCoverage()) {
-        return;
-      }
-
-      setStep(5);
-      return;
-    }
-
-    if (step === 5) {
-      setStep(6);
     }
   };
 
@@ -129,7 +117,6 @@ function MoveCustomerDialog({
     setStep(1);
     setSelectedReseller(null);
     setSelectedPriceListIds([]);
-    setMissingServices([]);
     setAcknowledgedImpact(false);
     clearMoveError?.();
   };
@@ -141,16 +128,14 @@ function MoveCustomerDialog({
 
   const canContinueFromCurrentStep =
     (step === 1) ||
-    (step === 2 && Boolean(selectedReseller)) ||
-    (step === 3 && effectiveSelectedPriceListIds.length > 0) ||
-    step === 5;
+    (step === 2 && Boolean(selectedReseller) && effectiveSelectedPriceListIds.length > 0 && !hasCoverageConflict);
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ fontWeight: 700 }}>Move customer</DialogTitle>
       <DialogContent dividers>
         <Typography sx={{ fontSize: 13, color: '#999', mb: 2 }}>
-          Step {step} of 6
+          Step {step} of 3
         </Typography>
 
         {moveError && (
@@ -165,21 +150,24 @@ function MoveCustomerDialog({
             <Typography sx={{ fontSize: 13, color: '#666', mb: 2 }}>
               Review current assignment before choosing destination.
             </Typography>
-            <PaperSection>
-              <SummaryRow label="Customer" value={`${customer?.name || '-'} (${customer?.id || '-'})`} />
+            <Box>
+              <StackedInfoRow label="CUSTOMER" value={`${customer?.name || '-'} (${customer?.id || '-'})`} />
               <Divider />
-              <SummaryRow label="Current reseller" value={`${currentReseller?.name || '-'} (${currentReseller?.id || '-'})`} />
+              <StackedInfoRow
+                label="CURRENT RESELLER"
+                value={`${currentReseller?.name || '-'} (${currentReseller?.id || '-'})`}
+              />
               <Divider />
-              <SummaryRow label="Current price list(s)" value={currentPriceListNames.join(', ') || '-'} />
-            </PaperSection>
+              <StackedInfoRow label="CURRENT PRICE LIST(S)" value={currentPriceListNames.join(', ') || '-'} />
+            </Box>
           </Box>
         )}
 
         {step === 2 && (
           <Box>
-            <Typography variant="h6" sx={{ mb: 1, fontSize: 18 }}>Destination reseller</Typography>
+            <Typography variant="h6" sx={{ mb: 1, fontSize: 18 }}>Destination reseller & price list(s)</Typography>
             <Typography sx={{ fontSize: 13, color: '#666', mb: 2 }}>
-              End customer can be moved to any point in hierarchy where a reseller exists.
+              Select destination reseller. Price list selection appears after reseller is selected.
             </Typography>
             <Autocomplete
               options={resellers.filter((reseller) => reseller.id !== currentReseller?.id)}
@@ -193,107 +181,118 @@ function MoveCustomerDialog({
                 <TextField {...params} placeholder="Search destination reseller" fullWidth />
               )}
             />
+
+            {selectedReseller && (
+              <Box sx={{ mt: 2.5 }}>
+                <Typography sx={{ fontSize: 13, color: '#666', mb: 1.25 }}>
+                  Destination price list(s)
+                </Typography>
+
+                {hasSingleDestinationPriceList && destinationPriceLists[0] && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    This reseller has only one price list; it will be applied automatically.
+                  </Alert>
+                )}
+
+                {destinationPriceLists.length > 1 && (
+                  <Box>
+                    <Typography sx={{ fontSize: 12, color: '#666', fontWeight: 600, mb: 1 }}>
+                      Price list selection is required
+                    </Typography>
+                    <Select
+                      fullWidth
+                      value={selectedPriceListIds[0] || ''}
+                      onChange={(event) => setSelectedPriceListIds([event.target.value])}
+                      displayEmpty
+                    >
+                      <MenuItem value="" disabled>
+                        Select destination price list
+                      </MenuItem>
+                      {destinationPriceLists.map((priceList) => (
+                        <MenuItem key={priceList.id} value={priceList.id}>
+                          {priceList.name} ({priceList.id})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </Box>
+                )}
+
+                {hasSingleDestinationPriceList && destinationPriceLists[0] && (
+                  <Box sx={{ mt: 1.5 }}>
+                    <SummaryRow
+                      label="Selected price list"
+                      value={`${destinationPriceLists[0].name} (${destinationPriceLists[0].id})`}
+                    />
+                  </Box>
+                )}
+
+                {hasCoverageConflict && (
+                  <Box sx={{ mt: 2 }}>
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      <Typography sx={{ fontSize: 14, mb: 1 }}>
+                        The selected price list(s) do not include these services. Select a different reseller or
+                        choose a destination price list that contains the required services.
+                      </Typography>
+
+                      <Box>
+                        {missingServices.map((service, index) => (
+                          <Box key={service.id}>
+                            <ListItem sx={{ px: 0 }}>
+                              <ListItemText
+                                primary={`${service.name} (${service.id})`}
+                                secondary={`SKU: ${service.sku}`}
+                                primaryTypographyProps={{ fontSize: 14, color: '#333' }}
+                                secondaryTypographyProps={{ fontSize: 12, color: '#666' }}
+                              />
+                            </ListItem>
+                            {index < missingServices.length - 1 && <Divider />}
+                          </Box>
+                        ))}
+                      </Box>
+                    </Alert>
+                  </Box>
+                )}
+
+                {!hasCoverageConflict && effectiveSelectedPriceListIds.length > 0 && (
+                  <Alert severity="success" sx={{ mt: 2 }}>
+                    Selected destination setup is valid. You can continue.
+                  </Alert>
+                )}
+              </Box>
+            )}
           </Box>
         )}
 
         {step === 3 && (
           <Box>
-            <Typography variant="h6" sx={{ mb: 1, fontSize: 18 }}>Destination price list(s)</Typography>
-            <Typography sx={{ fontSize: 13, color: '#666', mb: 2 }}>
-              Select destination price list that will be applied to this customer.
-            </Typography>
-
-            {hasSingleDestinationPriceList && destinationPriceLists[0] && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                This reseller has only one price list; it will be applied automatically.
-              </Alert>
-            )}
-
-            {destinationPriceLists.length > 1 && (
-              <Box>
-                <Typography sx={{ fontSize: 12, color: '#666', fontWeight: 600, mb: 1 }}>
-                  Price list selection is required
-                </Typography>
-                <Select
-                  fullWidth
-                  value={selectedPriceListIds[0] || ''}
-                  onChange={(event) => setSelectedPriceListIds([event.target.value])}
-                  displayEmpty
-                >
-                  <MenuItem value="" disabled>
-                    Select destination price list
-                  </MenuItem>
-                  {destinationPriceLists.map((priceList) => (
-                    <MenuItem key={priceList.id} value={priceList.id}>
-                      {priceList.name} ({priceList.id})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </Box>
-            )}
-
-            {hasSingleDestinationPriceList && destinationPriceLists[0] && (
-              <PaperSection>
-                <SummaryRow
-                  label="Selected price list"
-                  value={`${destinationPriceLists[0].name} (${destinationPriceLists[0].id})`}
-                />
-              </PaperSection>
-            )}
-          </Box>
-        )}
-
-        {step === 4 && (
-          <Box>
-            <Typography variant="h6" sx={{ mb: 1, fontSize: 18 }}>Validation feedback</Typography>
-            <Alert severity="error" sx={{ mb: 2 }}>
-              The selected price list(s) do not include these services. Go back and select a different reseller from
-              the list or choose a destination price list that contains the required services, then try again.
-            </Alert>
-            <List dense sx={{ border: '1px solid #e0e0e0', borderRadius: 1, bgcolor: '#fff' }}>
-              {missingServices.map((service) => (
-                <ListItem key={service.id} divider>
-                  <ListItemText
-                    primary={`${service.name} (${service.id})`}
-                    secondary={`SKU: ${service.sku}`}
-                    primaryTypographyProps={{ fontSize: 14, color: '#333' }}
-                    secondaryTypographyProps={{ fontSize: 12, color: '#666' }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-        )}
-
-        {step === 5 && (
-          <Box>
-            <Typography variant="h6" sx={{ mb: 1, fontSize: 18 }}>Billing & pricing summary</Typography>
-            <Stack spacing={1.5}>
-              <Typography sx={{ fontSize: 14, color: '#333' }}>
-                Billing items will be closed for old reseller and created for new reseller.
-              </Typography>
-              <Typography sx={{ fontSize: 14, color: '#333' }}>
-                Services under price protection will retain their price.
-              </Typography>
-              <Typography sx={{ fontSize: 14, color: '#333' }}>
-                Non-protected services may change price according to the destination price list at the time of move.
-              </Typography>
-              <Box>
-                <Tooltip title="Move does not retroactively re-rate completed billing periods.">
-                  <Link component="button" underline="hover" sx={{ fontSize: 13 }}>
-                    Learn more about billing impact
-                  </Link>
-                </Tooltip>
-              </Box>
-            </Stack>
-          </Box>
-        )}
-
-        {step === 6 && (
-          <Box>
             <Typography variant="h6" sx={{ mb: 1, fontSize: 18 }}>Confirm move</Typography>
             <Typography sx={{ fontSize: 13, color: '#666', mb: 2 }}>
               Review and confirm before applying this action.
+            </Typography>
+
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Stack spacing={0.75}>
+                <Typography sx={{ fontSize: 14, color: '#333' }}>
+                  Billing items will be closed for old reseller and created for new reseller.
+                </Typography>
+                <Typography sx={{ fontSize: 14, color: '#333' }}>
+                  Services under price protection will retain their price.
+                </Typography>
+                <Typography sx={{ fontSize: 14, color: '#333' }}>
+                  Non-protected services may change price according to the destination price list at the time of move.
+                </Typography>
+                <Box>
+                  <Tooltip title="Move does not retroactively re-rate completed billing periods.">
+                    <Link component="button" underline="hover" sx={{ fontSize: 13 }}>
+                      Learn more about billing impact
+                    </Link>
+                  </Tooltip>
+                </Box>
+              </Stack>
+            </Alert>
+
+            <Typography sx={{ fontSize: 12, color: '#999', fontWeight: 700, mb: 1 }}>
+              SUMMARY OF CHANGES
             </Typography>
             <PaperSection>
               <SummaryRow
@@ -314,6 +313,13 @@ function MoveCustomerDialog({
               />
             </PaperSection>
 
+            <Typography sx={{ fontSize: 12, color: '#999', fontWeight: 700, mt: 2, mb: 0.75 }}>
+              CONFIRMATION
+            </Typography>
+            <Typography sx={{ fontSize: 13, color: '#666' }}>
+              Confirm that you want to apply these changes to billing ownership and pricing context.
+            </Typography>
+
             <FormControlLabel
               sx={{ mt: 2 }}
               control={
@@ -330,7 +336,7 @@ function MoveCustomerDialog({
 
       <DialogActions sx={{ px: 3, py: 2, justifyContent: 'space-between' }}>
         <Box>
-          {step > 1 && step !== 6 && (
+          {step > 1 && (
             <Button onClick={() => setStep((previousStep) => previousStep - 1)} sx={{ textTransform: 'none' }}>
               Back
             </Button>
@@ -339,10 +345,10 @@ function MoveCustomerDialog({
 
         <Box sx={{ display: 'flex', gap: 1.5 }}>
           <Button onClick={handleClose} sx={{ textTransform: 'none' }}>
-            {step === 4 ? 'Close' : 'Cancel'}
+            Cancel
           </Button>
 
-          {step < 4 && (
+          {step < 3 && (
             <Button
               variant="contained"
               onClick={goNext}
@@ -353,24 +359,14 @@ function MoveCustomerDialog({
             </Button>
           )}
 
-          {step === 5 && (
-            <Button
-              variant="contained"
-              onClick={goNext}
-              sx={{ bgcolor: '#333', textTransform: 'none', '&:hover': { bgcolor: '#555' } }}
-            >
-              Continue
-            </Button>
-          )}
-
-          {step === 6 && (
+          {step === 3 && (
             <Button
               variant="contained"
               onClick={handleConfirmMove}
               disabled={!acknowledgedImpact}
               sx={{ bgcolor: '#333', textTransform: 'none', '&:hover': { bgcolor: '#555' } }}
             >
-              Move customer
+              Submit move
             </Button>
           )}
         </Box>
