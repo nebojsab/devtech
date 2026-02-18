@@ -4,7 +4,8 @@
 
 1. Povuci poslednje izmene:
    - `git pull origin main`
-2. Napravi izmene i proveri aplikaciju lokalno.
+2. Ako radiš novu funkcionalnost, prvo kreiraj zaseban branch po Jira pravilu (vidi sekciju 3).
+3. Napravi izmene i proveri aplikaciju lokalno.
 3. Pokreni provere:
    - `npm run lint`
    - (po potrebi) `npm run build`
@@ -13,7 +14,8 @@
 5. Commit:
    - `git commit -m "Add ..."`
 6. Push:
-   - `git push origin main` (ili feature branch)
+   - `git push origin <branch-name>` za feature rad
+   - `git push origin main` samo kada je to eksplicitno dogovoreno
 
 ## 2) Preporuka za commit poruke
 
@@ -30,6 +32,34 @@ Opcionalna forma sa prefiksima:
 - `docs: add UI and git contribution guides`
 
 ## 3) Kada push na main, a kada branch + PR
+
+Obavezno pravilo za novu funkcionalnost:
+
+- Za svaki novi feature koristi zaseban branch.
+- Pre kreiranja brancha moraš imati i Jira `Ticket ID` i naziv tiketa.
+- Branch naziv mora da se matchuje sa tiketom/epicom.
+- Preporučena konvencija:
+   - `feature/<TICKET-ID>-<kratak-kebab-opis>`
+   - `bugfix/<TICKET-ID>-<kratak-kebab-opis>`
+   - `hotfix/<TICKET-ID>-<kratak-kebab-opis>`
+- Primeri:
+   - `feature/CRM-142-add-customer-move-flow`
+   - `bugfix/CRM-318-fix-company-details-tabs`
+   - `feature/EPIC-21-pricing-wireframe-alignment`
+- Bez validnog Jira ID-a i naziva tiketa ne započinji novu funkcionalnost.
+
+Copy/paste template (zameni vrednosti):
+
+```bash
+# primer vrednosti
+TICKET_ID="CRM-142"
+TICKET_NAME="add-customer-move-flow"
+BRANCH_TYPE="feature" # feature | bugfix | hotfix
+
+git pull origin main
+git checkout -b "$BRANCH_TYPE/$TICKET_ID-$TICKET_NAME"
+git push -u origin "$BRANCH_TYPE/$TICKET_ID-$TICKET_NAME"
+```
 
 Push na `main`:
 

@@ -11,6 +11,8 @@ Ovaj folder sadrži praktične smernice za konzistentan razvoj i lakšu saradnju
 ## Brza pravila (TL;DR)
 
 - Koristi postojeće MUI obrasce i boje iz postojećih stranica; bez novih hardkodovanih tema bez dogovora.
+- Ako dobiješ screenshot postojeće aplikacije, prati layout 1:1, ali UI stil drži wireframe-ish i monohromatski.
+- Za novu funkcionalnost obavezan je zaseban branch koji prati Jira tiket (`feature/<ID>-<kebab-opis>`); pre početka su obavezni ID i naziv tiketa.
 - Za akcione ikonice koristi isti set i veličine kao u postojećim ekranima (`18px` u action zonama, `20px` u listama/sidebar).
 - Pre svakog commit-a: `npm run lint`.
 - Commit poruke neka budu kratke i akcione (imperativ): `Add ...`, `Fix ...`, `Refactor ...`.

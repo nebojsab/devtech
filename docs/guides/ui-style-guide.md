@@ -5,6 +5,8 @@
 - Zadrži postojeći visual language kroz ceo app.
 - Prioritet: čitljivost, konzistentnost i predvidljivo ponašanje.
 - Izbegavaj ad-hoc stilove kada već postoji obrazac u app-u.
+- Koristi wireframe-ish pristup: neutralne/monohromatske tonove i minimalne vizuelne akcente.
+- Ako je dat screenshot postojeće aplikacije kao referenca, layout prati 1:1 (struktura, raspored i hijerarhija sekcija), dok se vizuelni tretman radi u wireframe/monohromatskom stilu iz ovog vodiča.
 
 ## 2) Layout i spacing
 
