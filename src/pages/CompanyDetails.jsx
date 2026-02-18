@@ -18,9 +18,26 @@ import {
   Typography,
   ListItemIcon,
 } from '@mui/material';
-import { Business, DriveFileMove, Edit, FilterList, IosShare, MoreVert, Palette, Search } from '@mui/icons-material';
+import { Business, DriveFileMove, Edit, FilterList, IosShare, MoreVert, Palette } from '@mui/icons-material';
 import MoveCustomerDialog from '../components/MoveCustomerDialog';
 import { useCompanyContext } from '../context/CompanyContext';
+
+const formatAuditDate = (value) =>
+  new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(value));
+
+const formatAuditTime = (value) =>
+  new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZone: 'UTC',
+  }).format(new Date(value));
 
 function CompanyDetails() {
   const { id } = useParams();
@@ -30,6 +47,7 @@ function CompanyDetails() {
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [moveError, setMoveError] = useState('');
+  const [auditSearch, setAuditSearch] = useState('');
   const [successMessage, setSuccessMessage] = useState(location.state?.moveSuccessMessage || '');
 
   const {
@@ -49,6 +67,66 @@ function CompanyDetails() {
   const auditTabIndex = company?.type === 'Reseller' ? 6 : 5;
 
   const moveHistory = moveHistoryByCustomer[company?.id] || [];
+
+  const resellerAuditEntries = [
+    {
+      occurredAt: '2026-02-05T15:02:05Z',
+      timezone: 'GMT+1',
+      status: 'Successful',
+      event: 'Tenant Configuration',
+      operationPrefix: 'Activation of tenant for',
+      operationTarget: company?.name,
+      operationSuffix: '(01973a07-52df-7fa6-9bb3-de8be6dffb9b) has been completed successfully.',
+      users: [
+        { name: 'Marcus Hill', code: 'nbpwx' },
+        { name: 'BluePeak Networks', code: 'r3sqy' },
+      ],
+    },
+    {
+      occurredAt: '2025-10-23T11:35:01Z',
+      timezone: 'GMT+2',
+      status: 'Successful',
+      event: 'Tenant Configuration',
+      operationPrefix: 'Activation of tenant for',
+      operationTarget: company?.name,
+      operationSuffix: '(01973a07-52df-7fa6-9bb3-de8be6dffb9b) has been completed successfully.',
+      users: [
+        { name: 'Eric Tan', code: 'mkwzp' },
+        { name: 'GMS Platform Root', code: 'qa509' },
+      ],
+    },
+  ];
+
+  const customerAuditEntries = moveHistory.map((event) => ({
+    occurredAt: event.occurredAt,
+    timezone: 'GMT+0',
+    status: 'Successful',
+    event: 'Move Customer',
+    operationPrefix: 'Customer moved from',
+    operationTarget: event.beforeResellerName,
+    operationSuffix: `to ${event.afterResellerName}. Price lists: ${event.beforePriceListNames.join(', ')} → ${event.afterPriceListNames.join(', ')}. Effective date: ${event.effectiveDate}.`,
+    users: [{ name: 'System', code: 'Move workflow' }],
+  }));
+
+  const auditEntries = company?.type === 'Customer' ? customerAuditEntries : resellerAuditEntries;
+
+  const filteredAuditEntries = auditEntries.filter((entry) => {
+    const haystack = [
+      entry.status,
+      entry.event,
+      entry.operationPrefix,
+      entry.operationTarget,
+      entry.operationSuffix,
+      ...entry.users.flatMap((user) => [user.name, user.code]),
+      formatAuditDate(entry.occurredAt),
+      formatAuditTime(entry.occurredAt),
+      entry.timezone,
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return haystack.includes(auditSearch.trim().toLowerCase());
+  });
 
   useEffect(() => {
     if (location.state?.moveSuccessMessage) {
@@ -196,15 +274,15 @@ function CompanyDetails() {
         sx={{
           borderBottom: '1px solid #e0e0e0',
           mb: 3,
-          '& .MuiTabs-indicator': { backgroundColor: '#333' },
+          '& .MuiTabs-indicator': { backgroundColor: '#1976d2' },
           '& .MuiTab-root': {
-            color: '#999',
+            color: '#333',
             textTransform: 'none',
             fontSize: 14,
             fontWeight: 500,
             minWidth: 'auto',
             mr: 3,
-            '&.Mui-selected': { color: '#333', fontWeight: 600 },
+            '&.Mui-selected': { color: '#1976d2', fontWeight: 600 },
           },
         }}
       >
@@ -327,75 +405,65 @@ function CompanyDetails() {
             <TextField
               size="small"
               placeholder="Search Audit Log"
-              sx={{ width: 280, '& .MuiOutlinedInput-root': { bgcolor: '#fff' } }}
-              InputProps={{
-                startAdornment: <Search sx={{ color: '#999', fontSize: 18, mr: 1 }} />,
-              }}
+              value={auditSearch}
+              onChange={(event) => setAuditSearch(event.target.value)}
+              sx={{ width: 240, '& .MuiOutlinedInput-root': { bgcolor: '#fff' } }}
             />
 
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 variant="outlined"
                 startIcon={<FilterList sx={{ fontSize: 16 }} />}
-                sx={{ textTransform: 'none', borderColor: '#d0d0d0', color: '#333' }}
+                sx={{ textTransform: 'none', borderColor: '#d0d0d0', color: '#333', px: 2 }}
               >
                 Filter
               </Button>
               <Button
                 variant="outlined"
                 startIcon={<IosShare sx={{ fontSize: 16 }} />}
-                sx={{ textTransform: 'none', borderColor: '#d0d0d0', color: '#333' }}
+                sx={{ textTransform: 'none', borderColor: '#d0d0d0', color: '#333', px: 2 }}
               >
                 Export
               </Button>
             </Box>
           </Box>
 
-          {company?.type !== 'Customer' && (
-            <Typography sx={{ color: '#999', fontSize: 14 }}>
-              Move history is available for end customer records.
-            </Typography>
-          )}
+          {auditEntries.length === 0 && <Typography sx={{ color: '#999', fontSize: 14 }}>No audit events recorded yet.</Typography>}
 
-          {company?.type === 'Customer' && moveHistory.length === 0 && (
-            <Typography sx={{ color: '#999', fontSize: 14 }}>No move events recorded yet.</Typography>
-          )}
-
-          {company?.type === 'Customer' && moveHistory.length > 0 && (
-            <Box>
+          {auditEntries.length > 0 && (
+            <Box sx={{ border: '1px solid #efefef', borderRadius: 2, overflow: 'hidden' }}>
               <Box
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: '1.1fr 1.6fr 2.2fr 1fr',
+                  gridTemplateColumns: '1.1fr 1.5fr 2.4fr 1fr',
                   gap: 2,
-                  pb: 1.25,
+                  px: 2.5,
+                  py: 1.75,
                   borderBottom: '1px solid #e8e8e8',
                 }}
               >
-                <Typography sx={{ fontSize: 12, color: '#999', fontWeight: 600 }}>Date/Time</Typography>
-                <Typography sx={{ fontSize: 12, color: '#999', fontWeight: 600 }}>Event</Typography>
-                <Typography sx={{ fontSize: 12, color: '#999', fontWeight: 600 }}>Message</Typography>
-                <Typography sx={{ fontSize: 12, color: '#999', fontWeight: 600 }}>User</Typography>
+                <Typography sx={{ fontSize: 13, color: '#999', fontWeight: 600 }}>Date/Time</Typography>
+                <Typography sx={{ fontSize: 13, color: '#999', fontWeight: 600 }}>Event</Typography>
+                <Typography sx={{ fontSize: 13, color: '#999', fontWeight: 600 }}>Operations</Typography>
+                <Typography sx={{ fontSize: 13, color: '#999', fontWeight: 600 }}>User</Typography>
               </Box>
 
-              {moveHistory.map((event, index) => (
+              {filteredAuditEntries.map((entry, index) => (
                 <Box
-                  key={`${event.occurredAt}-${index}`}
+                  key={`${entry.occurredAt}-${index}`}
                   sx={{
                     display: 'grid',
-                    gridTemplateColumns: '1.1fr 1.6fr 2.2fr 1fr',
+                    gridTemplateColumns: '1.1fr 1.5fr 2.4fr 1fr',
                     gap: 2,
+                    px: 2.5,
                     py: 2,
-                    borderBottom: index < moveHistory.length - 1 ? '1px solid #f0f0f0' : 'none',
+                    borderBottom: index < filteredAuditEntries.length - 1 ? '1px solid #f0f0f0' : 'none',
                   }}
                 >
                   <Box>
-                    <Typography sx={{ fontSize: 13, color: '#333' }}>
-                      {new Date(event.occurredAt).toLocaleDateString()}
-                    </Typography>
-                    <Typography sx={{ fontSize: 12, color: '#999' }}>
-                      {new Date(event.occurredAt).toLocaleTimeString()}
-                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: '#333' }}>{formatAuditDate(entry.occurredAt)}</Typography>
+                    <Typography sx={{ fontSize: 12, color: '#666', lineHeight: 1.2 }}>{formatAuditTime(entry.occurredAt)}</Typography>
+                    <Typography sx={{ fontSize: 12, color: '#666', lineHeight: 1.2 }}>{entry.timezone}</Typography>
                   </Box>
 
                   <Box>
@@ -412,38 +480,37 @@ function CompanyDetails() {
                         mb: 0.5,
                       }}
                     >
-                      Successful
+                      {entry.status}
                     </Box>
-                    <Typography sx={{ fontSize: 14, color: '#333', fontWeight: 600 }}>Move customer</Typography>
-                    <Typography sx={{ fontSize: 13, color: '#1976d2' }}>
-                      {event.beforeResellerName} → {event.afterResellerName}
-                    </Typography>
+                    <Typography sx={{ fontSize: 14, color: '#333', lineHeight: 1.2 }}>{entry.event}</Typography>
                   </Box>
 
                   <Box>
-                    <Typography sx={{ fontSize: 13, color: '#666', mb: 0.5 }}>
-                      Customer moved to new reseller and destination price list(s).
+                    <Typography sx={{ fontSize: 13, color: '#666', mb: 0.25 }}>
+                      {entry.operationPrefix}{' '}
+                      <Link component="button" underline="none" sx={{ color: '#1976d2', fontSize: 13, fontWeight: 600 }}>
+                        {entry.operationTarget}
+                      </Link>
                     </Typography>
-                    <Typography sx={{ fontSize: 13, color: '#666' }}>
-                      Price lists: {event.beforePriceListNames.join(', ')} → {event.afterPriceListNames.join(', ')}
-                    </Typography>
-                    <Typography sx={{ fontSize: 13, color: '#666' }}>Effective date: {event.effectiveDate}</Typography>
+                    <Typography sx={{ fontSize: 13, color: '#666', lineHeight: 1.35 }}>{entry.operationSuffix}</Typography>
                   </Box>
 
                   <Box>
-                    <Typography sx={{ fontSize: 13, color: '#1976d2', fontWeight: 600 }}>System</Typography>
-                    <Typography sx={{ fontSize: 12, color: '#999' }}>Move workflow</Typography>
+                    {entry.users.map((user, userIndex) => (
+                      <Box key={`${user.name}-${user.code}`} sx={{ mb: userIndex < entry.users.length - 1 ? 0.75 : 0 }}>
+                        <Typography sx={{ fontSize: 13, color: '#1976d2', fontWeight: 600 }}>{user.name}</Typography>
+                        <Typography sx={{ fontSize: 12, color: '#999' }}>{user.code}</Typography>
+                      </Box>
+                    ))}
                   </Box>
                 </Box>
               ))}
-            </Box>
-          )}
 
-          {company?.type === 'Customer' && (
-            <Box sx={{ mt: 2 }}>
-              <Link component="button" underline="hover" sx={{ fontSize: 13 }}>
-                View billing details
-              </Link>
+              {filteredAuditEntries.length === 0 && (
+                <Box sx={{ px: 2.5, py: 2 }}>
+                  <Typography sx={{ color: '#999', fontSize: 13 }}>No audit events match your search.</Typography>
+                </Box>
+              )}
             </Box>
           )}
         </Paper>
