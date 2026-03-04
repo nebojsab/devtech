@@ -22,6 +22,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { formatCompanyId } from '../utils/formatCompanyId';
 
 function SummaryRow({ label, value }) {
   return (
@@ -32,11 +33,14 @@ function SummaryRow({ label, value }) {
   );
 }
 
-function StackedInfoRow({ label, value }) {
+function StackedInfoRow({ label, value, secondaryValue }) {
   return (
     <Box sx={{ py: 1.5 }}>
       <Typography sx={{ fontSize: 12, color: '#999', fontWeight: 600, mb: 0.5 }}>{label}</Typography>
       <Typography sx={{ fontSize: 16, color: '#333' }}>{value}</Typography>
+      {secondaryValue && (
+        <Typography sx={{ fontSize: 12, color: '#999', mt: 0.25 }}>{secondaryValue}</Typography>
+      )}
     </Box>
   );
 }
@@ -151,11 +155,16 @@ function MoveCustomerDialog({
               Review current assignment before choosing destination.
             </Typography>
             <Box>
-              <StackedInfoRow label="CUSTOMER" value={`${customer?.name || '-'} (${customer?.id || '-'})`} />
+              <StackedInfoRow
+                label="CUSTOMER"
+                value={customer?.name || '-'}
+                secondaryValue={`Company ID: ${formatCompanyId(customer?.id)}`}
+              />
               <Divider />
               <StackedInfoRow
                 label="CURRENT RESELLER"
-                value={`${currentReseller?.name || '-'} (${currentReseller?.id || '-'})`}
+                value={currentReseller?.name || '-'}
+                secondaryValue={`Company ID: ${formatCompanyId(currentReseller?.id)}`}
               />
               <Divider />
               <StackedInfoRow label="CURRENT PRICE LIST(S)" value={currentPriceListNames.join(', ') || '-'} />
@@ -176,7 +185,17 @@ function MoveCustomerDialog({
                 setSelectedReseller(newValue);
                 setSelectedPriceListIds([]);
               }}
-              getOptionLabel={(option) => `${option.name} (${option.id})`}
+              getOptionLabel={(option) => option?.name || ''}
+              renderOption={(props, option) => (
+                <Box component="li" {...props}>
+                  <Box>
+                    <Typography sx={{ fontSize: 16, color: '#333' }}>{option.name}</Typography>
+                    <Typography sx={{ fontSize: 12, color: '#999' }}>
+                      Company ID: {formatCompanyId(option.id)}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
               renderInput={(params) => (
                 <TextField {...params} placeholder="Search destination reseller" fullWidth />
               )}

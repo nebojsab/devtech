@@ -21,6 +21,7 @@ import {
 import { Business, DriveFileMove, Edit, FilterList, IosShare, MoreVert, Palette } from '@mui/icons-material';
 import MoveCustomerDialog from '../components/MoveCustomerDialog';
 import { useCompanyContext } from '../context/CompanyContext';
+import { formatCompanyId } from '../utils/formatCompanyId';
 
 const formatAuditDate = (value) =>
   new Intl.DateTimeFormat('en-GB', {
@@ -265,7 +266,9 @@ function CompanyDetails() {
           )}
         </Box>
 
-        <Typography sx={{ color: '#999', fontSize: 13, mt: 0.5 }}>{company?.code}</Typography>
+        <Typography sx={{ color: '#999', fontSize: 13, mt: 0.5 }}>
+          Company ID: {formatCompanyId(company?.id)} · Code: {company?.code || '-'}
+        </Typography>
       </Box>
 
       <Tabs
@@ -309,7 +312,10 @@ function CompanyDetails() {
                     CURRENT RESELLER
                   </Typography>
                   <Typography sx={{ color: '#333', fontSize: 14 }}>
-                    {currentReseller?.name || '-'} ({currentReseller?.id || '-'})
+                    {currentReseller?.name || '-'}
+                  </Typography>
+                  <Typography sx={{ color: '#999', fontSize: 12, mt: 0.25 }}>
+                    Company ID: {formatCompanyId(currentReseller?.id)}
                   </Typography>
                 </Box>
               )}
