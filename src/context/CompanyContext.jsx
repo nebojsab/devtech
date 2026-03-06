@@ -246,9 +246,9 @@ const companyPermissions = {
 
 const initialSessionUser = {
   id: 'ppa-1',
-  displayName: 'Erica Thomson',
-  initials: 'ET',
-  role: 'PPA',
+  displayName: 'Acme Corporation Admin',
+  initials: 'AC',
+  role: 'ResellerAdmin',
   companyId: 6,
 };
 

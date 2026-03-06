@@ -51,7 +51,7 @@ function MyCompany() {
             sx={{
               borderBottom: '1px solid #e0e0e0',
               mb: 3,
-              '& .MuiTabs-indicator': { backgroundColor: '#1976d2' },
+              '& .MuiTabs-indicator': { backgroundColor: '#333' },
               '& .MuiTab-root': {
                 color: '#333',
                 textTransform: 'none',
@@ -59,7 +59,7 @@ function MyCompany() {
                 fontWeight: 500,
                 minWidth: 'auto',
                 mr: 3,
-                '&.Mui-selected': { color: '#1976d2', fontWeight: 600 },
+                '&.Mui-selected': { color: '#111', fontWeight: 600 },
               },
             }}
           >
@@ -82,13 +82,13 @@ function MyCompany() {
                 <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
                   <Box>
                     <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.75 }}>COMPANY LOGO</Typography>
-                    <Avatar sx={{ width: 74, height: 74, bgcolor: '#3f00b5', color: '#fff' }}>
+                    <Avatar sx={{ width: 74, height: 74, bgcolor: '#444', color: '#fff' }}>
                       <Business sx={{ fontSize: 32 }} />
                     </Avatar>
                   </Box>
                   <Box>
                     <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.75 }}>BRAND COLOR</Typography>
-                    <Avatar sx={{ width: 74, height: 74, bgcolor: myCompanyProfile.brandColor || '#3f00b5', color: '#fff' }}>
+                    <Avatar sx={{ width: 74, height: 74, bgcolor: '#666', color: '#fff' }}>
                       <Palette sx={{ fontSize: 30 }} />
                     </Avatar>
                   </Box>
@@ -207,15 +207,16 @@ function MyCompany() {
 
       {safeHomepageHtml && (
         <Box>
-          <Alert severity="info" sx={{ mb: 2, borderRadius: 1 }}>
+          <Alert severity="info" sx={{ mb: 2, borderRadius: 1, bgcolor: '#f3f3f3', color: '#333', '& .MuiAlert-icon': { color: '#777' } }}>
             Custom homepage is active for direct child companies of reseller ID {customHomepage.resellerId}.
           </Alert>
           <Paper sx={{ p: 0, border: '1px solid #e0e0e0', boxShadow: 'none', bgcolor: '#ffffff' }}>
             <Box
               sx={{
                 minHeight: 340,
+                color: '#333',
                 '& a': {
-                  color: '#0056b3',
+                  color: '#444',
                 },
                 '& img': {
                   maxWidth: '100%',

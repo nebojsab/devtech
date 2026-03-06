@@ -224,7 +224,7 @@ function ResellerCustomHomepageCard({
           variant="contained"
           onClick={handleSave}
           disabled={globalLoading || isSaving || isResetting || isFetching}
-          sx={{ textTransform: 'none' }}
+          sx={{ textTransform: 'none', bgcolor: '#333', '&:hover': { bgcolor: '#555' } }}
         >
           {isSaving ? 'Saving...' : 'Save Homepage'}
         </Button>
@@ -487,7 +487,7 @@ function CompanyDetails() {
         sx={{
           borderBottom: '1px solid #e0e0e0',
           mb: 3,
-          '& .MuiTabs-indicator': { backgroundColor: '#1976d2' },
+          '& .MuiTabs-indicator': { backgroundColor: '#333' },
           '& .MuiTab-root': {
             color: '#333',
             textTransform: 'none',
@@ -495,7 +495,7 @@ function CompanyDetails() {
             fontWeight: 500,
             minWidth: 'auto',
             mr: 3,
-            '&.Mui-selected': { color: '#1976d2', fontWeight: 600 },
+            '&.Mui-selected': { color: '#111', fontWeight: 600 },
           },
         }}
       >
@@ -725,7 +725,7 @@ function CompanyDetails() {
                   <Box>
                     <Typography sx={{ fontSize: 13, color: '#666', mb: 0.25 }}>
                       {entry.operationPrefix}{' '}
-                      <Link component="button" underline="none" sx={{ color: '#1976d2', fontSize: 13, fontWeight: 600 }}>
+                      <Link component="button" underline="none" sx={{ color: '#333', fontSize: 13, fontWeight: 600 }}>
                         {entry.operationTarget}
                       </Link>
                     </Typography>
@@ -735,7 +735,7 @@ function CompanyDetails() {
                   <Box>
                     {entry.users.map((user, userIndex) => (
                       <Box key={`${user.name}-${user.code}`} sx={{ mb: userIndex < entry.users.length - 1 ? 0.75 : 0 }}>
-                        <Typography sx={{ fontSize: 13, color: '#1976d2', fontWeight: 600 }}>{user.name}</Typography>
+                        <Typography sx={{ fontSize: 13, color: '#333', fontWeight: 600 }}>{user.name}</Typography>
                         <Typography sx={{ fontSize: 12, color: '#999' }}>{user.code}</Typography>
                       </Box>
                     ))}

@@ -135,7 +135,7 @@ function Header() {
             },
           }}
         >
-          <Badge badgeContent={3} sx={{ '& .MuiBadge-badge': { bgcolor: '#ff6b6b', color: '#fff' } }}>
+          <Badge badgeContent={3} sx={{ '& .MuiBadge-badge': { bgcolor: '#888', color: '#fff' } }}>
             <Notifications sx={{ fontSize: 24 }} />
           </Badge>
         </IconButton>
@@ -145,8 +145,8 @@ function Header() {
           sx={{
             width: 36,
             height: 36,
-            bgcolor: '#e0e0e0',
-            color: '#666',
+            bgcolor: '#d6d6d6',
+            color: '#444',
             cursor: 'pointer',
             fontSize: 16,
             fontWeight: 600,
