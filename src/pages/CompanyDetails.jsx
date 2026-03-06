@@ -273,8 +273,9 @@ function CompanyDetails() {
   const currentPriceListNames = (company?.currentPriceListIds || []).map(
     (priceListId) => getPriceListById(company.resellerId, priceListId)?.name || priceListId,
   );
-  const homepageConfigTabIndex = company?.type === 'Reseller' ? 6 : -1;
-  const auditTabIndex = company?.type === 'Reseller' ? 7 : 5;
+  const showHomepageConfigTab = company?.type === 'Reseller' && isPpaUser;
+  const homepageConfigTabIndex = showHomepageConfigTab ? 6 : -1;
+  const auditTabIndex = company?.type === 'Reseller' ? (showHomepageConfigTab ? 7 : 6) : 5;
 
   const moveHistory = moveHistoryByCustomer[company?.id] || [];
 
@@ -504,7 +505,7 @@ function CompanyDetails() {
         <Tab label="Pricelists" />
         <Tab label="Services" />
         {company?.type === 'Reseller' && <Tab label="Companies" />}
-        {company?.type === 'Reseller' && <Tab label="Home Page Configuration" />}
+        {showHomepageConfigTab && <Tab label="Home Page Configuration" />}
         <Tab label="Audit Log" />
       </Tabs>
 

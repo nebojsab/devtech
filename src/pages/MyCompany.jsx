@@ -207,13 +207,13 @@ function MyCompany() {
 
       {safeHomepageHtml && (
         <Box>
-          <Alert severity="info" sx={{ mb: 2 }}>
+          <Alert severity="info" sx={{ mb: 2, borderRadius: 1 }}>
             Custom homepage is active for direct child companies of reseller ID {customHomepage.resellerId}.
           </Alert>
-          <Paper sx={{ p: 1.5, border: '1px solid #e0e0e0', boxShadow: 'none', bgcolor: '#ffffff' }}>
+          <Paper sx={{ p: 0, border: '1px solid #e0e0e0', boxShadow: 'none', bgcolor: '#ffffff' }}>
             <Box
               sx={{
-                minHeight: 320,
+                minHeight: 340,
                 '& a': {
                   color: '#0056b3',
                 },
