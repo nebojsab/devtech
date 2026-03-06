@@ -255,6 +255,7 @@ const initialSessionUser = {
 const initialResellerHomepageById = {
   2: {
     enabled: true,
+    sourceUrl: 'https://example.com/bluepeak-homepage.html',
     html: `
 <section style="font-family: Arial, sans-serif; padding: 24px; max-width: 820px; margin: 0 auto;">
   <h1 style="margin-bottom: 8px; color: #12385b;">Welcome to BluePeak Partner Hub</h1>
@@ -324,6 +325,7 @@ export function CompanyProvider({ children }) {
 
             next[Number(resellerId)] = {
               enabled: Boolean(config.enabled),
+              sourceUrl: typeof config.sourceUrl === 'string' ? config.sourceUrl : '',
               html: typeof config.html === 'string' ? config.html : '',
               updatedAt: config.updatedAt || new Date().toISOString(),
             };
@@ -353,7 +355,7 @@ export function CompanyProvider({ children }) {
 
   const getResellerHomepageConfig = (resellerId) => resellerHomepageById[Number(resellerId)] || null;
 
-  const upsertResellerHomepageConfig = async ({ resellerId, enabled, html }) => {
+  const upsertResellerHomepageConfig = async ({ resellerId, enabled, html, sourceUrl }) => {
     assertPpaPrivileges();
 
     const reseller = findCompanyById(resellerId);
@@ -368,6 +370,7 @@ export function CompanyProvider({ children }) {
 
     const candidateConfig = {
       enabled: canEnable,
+      sourceUrl: typeof sourceUrl === 'string' ? sourceUrl.trim() : '',
       html: trimmedHtml,
       updatedAt: new Date().toISOString(),
     };
@@ -375,11 +378,13 @@ export function CompanyProvider({ children }) {
     const persistedConfig = await upsertHomepageConfigApi({
       resellerId: reseller.id,
       enabled: candidateConfig.enabled,
+      sourceUrl: candidateConfig.sourceUrl,
       html: candidateConfig.html,
     });
 
     const nextConfig = {
       enabled: Boolean(persistedConfig?.enabled),
+      sourceUrl: typeof persistedConfig?.sourceUrl === 'string' ? persistedConfig.sourceUrl : candidateConfig.sourceUrl,
       html: typeof persistedConfig?.html === 'string' ? persistedConfig.html : candidateConfig.html,
       updatedAt: persistedConfig?.updatedAt || candidateConfig.updatedAt,
     };

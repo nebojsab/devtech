@@ -24,6 +24,7 @@ import { Business, DriveFileMove, Edit, FilterList, IosShare, MoreVert, Palette 
 import MoveCustomerDialog from '../components/MoveCustomerDialog';
 import { useCompanyContext } from '../context/CompanyContext';
 import { formatCompanyId } from '../utils/formatCompanyId';
+import { sanitizeCustomHomepageHtml } from '../utils/sanitizeCustomHomepageHtml';
 
 const formatAuditDate = (value) =>
   new Intl.DateTimeFormat('en-GB', {
@@ -46,16 +47,58 @@ function ResellerCustomHomepageCard({
   resellerId,
   initialEnabled,
   initialHtml,
+  initialSourceUrl,
   onSaveConfig,
   onResetConfig,
   globalLoading,
 }) {
   const [enabled, setEnabled] = useState(initialEnabled);
   const [html, setHtml] = useState(initialHtml);
+  const [sourceUrl, setSourceUrl] = useState(initialSourceUrl);
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+
+  const safePreviewHtml = sanitizeCustomHomepageHtml(html || '');
+
+  const handleFetchHtml = async () => {
+    setMessage('');
+    setErrorMessage('');
+
+    const trimmedUrl = sourceUrl.trim();
+
+    if (!trimmedUrl) {
+      setErrorMessage('Template API URL is required to fetch HTML.');
+      return;
+    }
+
+    try {
+      new URL(trimmedUrl);
+    } catch {
+      setErrorMessage('Template API URL must be a valid absolute URL.');
+      return;
+    }
+
+    setIsFetching(true);
+
+    try {
+      const response = await fetch(trimmedUrl);
+
+      if (!response.ok) {
+        throw new Error(`Template API returned status ${response.status}.`);
+      }
+
+      const fetchedHtml = await response.text();
+      setHtml(fetchedHtml);
+      setMessage('HTML fetched from URL. Review preview and click Save Homepage to persist.');
+    } catch (error) {
+      setErrorMessage(error.message || 'Failed to fetch HTML from URL.');
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const handleSave = async () => {
     setMessage('');
@@ -63,7 +106,7 @@ function ResellerCustomHomepageCard({
     setIsSaving(true);
 
     try {
-      const result = await onSaveConfig({ resellerId, enabled, html });
+      const result = await onSaveConfig({ resellerId, enabled, html, sourceUrl: sourceUrl.trim() });
       const warnings = result.warnings?.length ? ` ${result.warnings.join(' ')}` : '';
 
       if (enabled && !result.config.enabled) {
@@ -88,6 +131,7 @@ function ResellerCustomHomepageCard({
       await onResetConfig(resellerId);
       setEnabled(false);
       setHtml('');
+      setSourceUrl('');
       setMessage('Custom homepage configuration removed and disabled.');
     } catch (error) {
       setErrorMessage(error.message || 'Failed to reset homepage configuration.');
@@ -121,13 +165,32 @@ function ResellerCustomHomepageCard({
         control={
           <Switch
             checked={enabled}
-            disabled={globalLoading || isSaving || isResetting}
+            disabled={globalLoading || isSaving || isResetting || isFetching}
             onChange={(event) => setEnabled(event.target.checked)}
           />
         }
         label={enabled ? 'Custom homepage enabled: ON' : 'Custom homepage enabled: OFF'}
         sx={{ mb: 1 }}
       />
+
+      <Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'center' }}>
+        <TextField
+          label="Template API URL (optional)"
+          value={sourceUrl}
+          onChange={(event) => setSourceUrl(event.target.value)}
+          placeholder="https://example.com/custom-homepage.html"
+          fullWidth
+          disabled={globalLoading || isSaving || isResetting || isFetching}
+        />
+        <Button
+          variant="outlined"
+          onClick={handleFetchHtml}
+          disabled={globalLoading || isSaving || isResetting || isFetching}
+          sx={{ textTransform: 'none', whiteSpace: 'nowrap', height: 56 }}
+        >
+          {isFetching ? 'Fetching...' : 'Fetch HTML'}
+        </Button>
+      </Box>
 
       <TextField
         label="Static HTML"
@@ -137,15 +200,30 @@ function ResellerCustomHomepageCard({
         minRows={10}
         placeholder="Paste static HTML for direct child companies. JavaScript is not allowed."
         fullWidth
-        disabled={globalLoading || isSaving || isResetting}
+        disabled={globalLoading || isSaving || isResetting || isFetching}
         sx={{ mb: 2 }}
       />
+
+      <Typography sx={{ fontSize: 12, color: '#666', mb: 1 }}>Preview</Typography>
+      <Paper sx={{ p: 2, border: '1px solid #efefef', boxShadow: 'none', minHeight: 120, mb: 2 }}>
+        {safePreviewHtml ? (
+          <Box
+            sx={{
+              '& img': { maxWidth: '100%', height: 'auto' },
+              '& a': { color: '#0056b3' },
+            }}
+            dangerouslySetInnerHTML={{ __html: safePreviewHtml }}
+          />
+        ) : (
+          <Typography sx={{ color: '#999', fontSize: 13 }}>No preview available. Paste HTML or fetch from URL.</Typography>
+        )}
+      </Paper>
 
       <Box sx={{ display: 'flex', gap: 1.5 }}>
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={globalLoading || isSaving || isResetting}
+          disabled={globalLoading || isSaving || isResetting || isFetching}
           sx={{ textTransform: 'none' }}
         >
           {isSaving ? 'Saving...' : 'Save Homepage'}
@@ -153,7 +231,7 @@ function ResellerCustomHomepageCard({
         <Button
           variant="outlined"
           onClick={handleReset}
-          disabled={globalLoading || isSaving || isResetting}
+          disabled={globalLoading || isSaving || isResetting || isFetching}
           sx={{ textTransform: 'none' }}
         >
           {isResetting ? 'Removing...' : 'Remove Homepage'}
@@ -195,7 +273,8 @@ function CompanyDetails() {
   const currentPriceListNames = (company?.currentPriceListIds || []).map(
     (priceListId) => getPriceListById(company.resellerId, priceListId)?.name || priceListId,
   );
-  const auditTabIndex = company?.type === 'Reseller' ? 6 : 5;
+  const homepageConfigTabIndex = company?.type === 'Reseller' ? 6 : -1;
+  const auditTabIndex = company?.type === 'Reseller' ? 7 : 5;
 
   const moveHistory = moveHistoryByCustomer[company?.id] || [];
 
@@ -425,6 +504,7 @@ function CompanyDetails() {
         <Tab label="Pricelists" />
         <Tab label="Services" />
         {company?.type === 'Reseller' && <Tab label="Companies" />}
+        {company?.type === 'Reseller' && <Tab label="Home Page Configuration" />}
         <Tab label="Audit Log" />
       </Tabs>
 
@@ -526,24 +606,30 @@ function CompanyDetails() {
               </Box>
             </Paper>
 
-            {company?.type === 'Reseller' && isPpaUser && (
-              <Box sx={{ mt: 3 }}>
-                <ResellerCustomHomepageCard
-                  key={`${company.id}-${resellerHomepageConfig?.updatedAt || 'none'}`}
-                  resellerId={company.id}
-                  initialEnabled={Boolean(resellerHomepageConfig?.enabled)}
-                  initialHtml={resellerHomepageConfig?.html || ''}
-                  onSaveConfig={upsertResellerHomepageConfig}
-                  onResetConfig={clearResellerHomepageConfig}
-                  globalLoading={homepageConfigLoading}
-                />
-              </Box>
-            )}
           </Box>
         </Box>
       )}
 
-      {tabValue !== 0 && tabValue !== auditTabIndex && (
+      {tabValue === homepageConfigTabIndex && (
+        <Box sx={{ width: '100%' }}>
+          {!isPpaUser && <Alert severity="warning">Only Platform Provider Admin users can configure reseller homepage.</Alert>}
+
+          {isPpaUser && (
+            <ResellerCustomHomepageCard
+              key={`${company.id}-${resellerHomepageConfig?.updatedAt || 'none'}`}
+              resellerId={company.id}
+              initialEnabled={Boolean(resellerHomepageConfig?.enabled)}
+              initialHtml={resellerHomepageConfig?.html || ''}
+              initialSourceUrl={resellerHomepageConfig?.sourceUrl || ''}
+              onSaveConfig={upsertResellerHomepageConfig}
+              onResetConfig={clearResellerHomepageConfig}
+              globalLoading={homepageConfigLoading}
+            />
+          )}
+        </Box>
+      )}
+
+      {tabValue !== 0 && tabValue !== homepageConfigTabIndex && tabValue !== auditTabIndex && (
         <Box sx={{ p: 3, textAlign: 'center', width: '100%' }}>
           <Typography sx={{ color: '#999' }}>Content for this tab coming soon...</Typography>
         </Box>

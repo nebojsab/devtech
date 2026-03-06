@@ -59,17 +59,18 @@ export async function getHomepageConfig(resellerId) {
   return store[String(resellerId)] || null;
 }
 
-export async function upsertHomepageConfig({ resellerId, enabled, html }) {
+export async function upsertHomepageConfig({ resellerId, enabled, sourceUrl, html }) {
   if (API_MODE === 'remote') {
     return request(`/api/resellers/${resellerId}/custom-homepage`, {
       method: 'PUT',
-      body: JSON.stringify({ enabled, html }),
+      body: JSON.stringify({ enabled, sourceUrl, html }),
     });
   }
 
   const store = getMockStore();
   const nextConfig = {
     enabled: Boolean(enabled),
+    sourceUrl: typeof sourceUrl === 'string' ? sourceUrl : '',
     html: typeof html === 'string' ? html : '',
     updatedAt: new Date().toISOString(),
   };

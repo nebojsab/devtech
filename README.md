@@ -42,10 +42,10 @@ Environment varijable:
 Ocekivani endpoint kontrakt (`remote`):
 
 - `GET /api/resellers/:resellerId/custom-homepage`
-  - `200`: `{ enabled: boolean, html: string, updatedAt: string }`
+  - `200`: `{ enabled: boolean, sourceUrl?: string, html: string, updatedAt: string }`
   - `404`: nema konfiguracije
 - `PUT /api/resellers/:resellerId/custom-homepage`
-  - body: `{ enabled: boolean, html: string }`
-  - `200`: `{ enabled: boolean, html: string, updatedAt: string }`
+  - body: `{ enabled: boolean, sourceUrl?: string, html: string }`
+  - `200`: `{ enabled: boolean, sourceUrl?: string, html: string, updatedAt: string }`
 - `DELETE /api/resellers/:resellerId/custom-homepage`
   - `204`
