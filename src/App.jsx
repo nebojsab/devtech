@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Companies from './pages/Companies';
 import CompanyDetails from './pages/CompanyDetails';
+import MyCompany from './pages/MyCompany';
 import { CompanyProvider } from './context/CompanyContext';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
               <Routes>
                 <Route path="/" element={<Companies />} />
+                <Route path="/my-company" element={<MyCompany />} />
                 <Route path="/company/:id" element={<CompanyDetails />} />
               </Routes>
             </Box>

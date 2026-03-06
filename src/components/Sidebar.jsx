@@ -1,15 +1,13 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Divider,
 } from '@mui/material';
 import {
-  Business,
   Handshake,
   Inventory,
   LocalOffer,
@@ -21,17 +19,21 @@ import {
 } from '@mui/icons-material';
 
 const menuItems = [
-  { icon: Store, label: 'Companies', active: true },
-  { icon: Handshake, label: 'Vendors', active: false },
-  { icon: Inventory, label: 'Catalog', active: false },
-  { icon: LocalOffer, label: 'Pricelists', active: false },
-  { icon: Description, label: 'Quotes', active: false },
-  { icon: BarChart, label: 'Reports', active: false },
-  { icon: History, label: 'Audit Logs', active: false },
+  { icon: Store, label: 'Companies', to: '/' },
+  { icon: Handshake, label: 'Vendors' },
+  { icon: Inventory, label: 'Catalog' },
+  { icon: LocalOffer, label: 'Pricelists' },
+  { icon: Description, label: 'Quotes' },
+  { icon: BarChart, label: 'Reports' },
+  { icon: History, label: 'Audit Logs' },
 ];
 
 function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isCompaniesRoute = location.pathname === '/' || location.pathname.startsWith('/company/');
+  const isMyCompanyRoute = location.pathname === '/my-company';
 
   return (
     <Box
@@ -54,18 +56,21 @@ function Sidebar() {
 
       {/* Main Menu */}
       <List sx={{ flex: 1, p: 0 }}>
-        {menuItems.map((item, index) => (
+        {menuItems.map((item, index) => {
+          const isActive = item.label === 'Companies' ? isCompaniesRoute : false;
+
+          return (
           <ListItem
             key={index}
             onClick={() => {
-              if (item.label === 'Companies') {
-                navigate('/');
+              if (item.to) {
+                navigate(item.to);
               }
             }}
             sx={{
-              bgcolor: item.active ? '#f0f0f0' : 'transparent',
-              borderLeft: item.active ? '3px solid #333' : 'none',
-              pl: item.active ? 2.625 : 3,
+              bgcolor: isActive ? '#f0f0f0' : 'transparent',
+              borderLeft: isActive ? '3px solid #333' : 'none',
+              pl: isActive ? 2.625 : 3,
               cursor: 'pointer',
               '&:hover': {
                 bgcolor: '#f9f9f9',
@@ -81,20 +86,24 @@ function Sidebar() {
               sx={{
                 '& .MuiListItemText-primary': {
                   fontSize: 14,
-                  fontWeight: item.active ? 600 : 400,
-                  color: item.active ? '#333' : '#666',
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? '#333' : '#666',
                 },
               }}
             />
           </ListItem>
-        ))}
+          );
+        })}
       </List>
 
       {/* Bottom Section */}
       <Box sx={{ borderTop: '1px solid #e0e0e0' }}>
         <ListItem
+          onClick={() => navigate('/my-company')}
           sx={{
-            pl: 3,
+            bgcolor: isMyCompanyRoute ? '#f0f0f0' : 'transparent',
+            borderLeft: isMyCompanyRoute ? '3px solid #333' : 'none',
+            pl: isMyCompanyRoute ? 2.625 : 3,
             cursor: 'pointer',
             '&:hover': {
               bgcolor: '#f9f9f9',
@@ -109,7 +118,8 @@ function Sidebar() {
             sx={{
               '& .MuiListItemText-primary': {
                 fontSize: 14,
-                color: '#666',
+                color: isMyCompanyRoute ? '#333' : '#666',
+                fontWeight: isMyCompanyRoute ? 600 : 400,
               },
             }}
           />

@@ -2,7 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - feature/GP-4782-custom-homepage-resellers-ui
   workflow_dispatch:
 
 permissions:

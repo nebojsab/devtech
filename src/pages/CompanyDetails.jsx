@@ -11,6 +11,8 @@ import {
   Menu,
   MenuItem,
   Paper,
+  FormControlLabel,
+  Switch,
   Tab,
   Tabs,
   TextField,
@@ -40,6 +42,127 @@ const formatAuditTime = (value) =>
     timeZone: 'UTC',
   }).format(new Date(value));
 
+function ResellerCustomHomepageCard({
+  resellerId,
+  initialEnabled,
+  initialHtml,
+  onSaveConfig,
+  onResetConfig,
+  globalLoading,
+}) {
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [html, setHtml] = useState(initialHtml);
+  const [message, setMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleSave = async () => {
+    setMessage('');
+    setErrorMessage('');
+    setIsSaving(true);
+
+    try {
+      const result = await onSaveConfig({ resellerId, enabled, html });
+      const warnings = result.warnings?.length ? ` ${result.warnings.join(' ')}` : '';
+
+      if (enabled && !result.config.enabled) {
+        setMessage('Custom homepage remains OFF because sanitized HTML is empty.' + warnings);
+        return;
+      }
+
+      setMessage('Custom homepage configuration saved.' + warnings);
+    } catch (error) {
+      setErrorMessage(error.message || 'Failed to save homepage configuration.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setMessage('');
+    setErrorMessage('');
+    setIsResetting(true);
+
+    try {
+      await onResetConfig(resellerId);
+      setEnabled(false);
+      setHtml('');
+      setMessage('Custom homepage configuration removed and disabled.');
+    } catch (error) {
+      setErrorMessage(error.message || 'Failed to reset homepage configuration.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  return (
+    <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0', width: '100%' }}>
+      <Typography variant="h6" sx={{ color: '#333', fontWeight: 600, mb: 0.5 }}>
+        Custom Homepage
+      </Typography>
+      <Typography sx={{ color: '#666', fontSize: 13, mb: 2 }}>
+        PPA-only control for direct child companies of this reseller. Scripts and event handlers are removed during save.
+      </Typography>
+
+      {message && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMessage('')}>
+          {message}
+        </Alert>
+      )}
+
+      {errorMessage && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setErrorMessage('')}>
+          {errorMessage}
+        </Alert>
+      )}
+
+      <FormControlLabel
+        control={
+          <Switch
+            checked={enabled}
+            disabled={globalLoading || isSaving || isResetting}
+            onChange={(event) => setEnabled(event.target.checked)}
+          />
+        }
+        label={enabled ? 'Custom homepage enabled: ON' : 'Custom homepage enabled: OFF'}
+        sx={{ mb: 1 }}
+      />
+
+      <TextField
+        label="Static HTML"
+        value={html}
+        onChange={(event) => setHtml(event.target.value)}
+        multiline
+        minRows={10}
+        placeholder="Paste static HTML for direct child companies. JavaScript is not allowed."
+        fullWidth
+        disabled={globalLoading || isSaving || isResetting}
+        sx={{ mb: 2 }}
+      />
+
+      <Box sx={{ display: 'flex', gap: 1.5 }}>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={globalLoading || isSaving || isResetting}
+          sx={{ textTransform: 'none' }}
+        >
+          {isSaving ? 'Saving...' : 'Save Homepage'}
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleReset}
+          disabled={globalLoading || isSaving || isResetting}
+          sx={{ textTransform: 'none' }}
+        >
+          {isResetting ? 'Removing...' : 'Remove Homepage'}
+        </Button>
+      </Box>
+    </Paper>
+  );
+}
+
 function CompanyDetails() {
   const { id } = useParams();
   const location = useLocation();
@@ -58,9 +181,16 @@ function CompanyDetails() {
     moveHistoryByCustomer,
     companyPermissions,
     getPriceListById,
+    sessionUser,
+    getResellerHomepageConfig,
+    upsertResellerHomepageConfig,
+    clearResellerHomepageConfig,
+    homepageConfigLoading,
   } = useCompanyContext();
 
   const company = findCompanyById(id) || findCompanyById(1);
+  const isPpaUser = sessionUser?.role === 'PPA';
+  const resellerHomepageConfig = company?.type === 'Reseller' ? getResellerHomepageConfig(company.id) : null;
   const currentReseller = company?.type === 'Customer' ? findCompanyById(company.resellerId) : null;
   const currentPriceListNames = (company?.currentPriceListIds || []).map(
     (priceListId) => getPriceListById(company.resellerId, priceListId)?.name || priceListId,
@@ -395,6 +525,20 @@ function CompanyDetails() {
                 </Avatar>
               </Box>
             </Paper>
+
+            {company?.type === 'Reseller' && isPpaUser && (
+              <Box sx={{ mt: 3 }}>
+                <ResellerCustomHomepageCard
+                  key={`${company.id}-${resellerHomepageConfig?.updatedAt || 'none'}`}
+                  resellerId={company.id}
+                  initialEnabled={Boolean(resellerHomepageConfig?.enabled)}
+                  initialHtml={resellerHomepageConfig?.html || ''}
+                  onSaveConfig={upsertResellerHomepageConfig}
+                  onResetConfig={clearResellerHomepageConfig}
+                  globalLoading={homepageConfigLoading}
+                />
+              </Box>
+            )}
           </Box>
         </Box>
       )}

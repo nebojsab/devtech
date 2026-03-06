@@ -6,10 +6,26 @@ import {
   Badge,
   Avatar,
   InputAdornment,
+  MenuItem,
+  Select,
+  Typography,
 } from '@mui/material';
 import { Search, Notifications } from '@mui/icons-material';
+import { useCompanyContext } from '../context/CompanyContext';
 
 function Header() {
+  const { sessionUser, companies, impersonateSessionUser } = useCompanyContext();
+
+  const initials =
+    sessionUser.initials ||
+    sessionUser.displayName
+      ?.split(' ')
+      .map((token) => token.charAt(0))
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() ||
+    'NA';
+
   return (
     <Box
       sx={{
@@ -57,6 +73,59 @@ function Header() {
 
       {/* Right Section */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Typography sx={{ fontSize: 11, color: '#777', fontWeight: 600 }}>SESSION</Typography>
+
+          <Select
+            value={sessionUser.role}
+            size="small"
+            onChange={(event) =>
+              impersonateSessionUser({
+                role: event.target.value,
+                companyId: sessionUser.companyId,
+              })
+            }
+            sx={{
+              minWidth: 140,
+              height: 34,
+              bgcolor: '#fff',
+              fontSize: 13,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#d8d8d8',
+              },
+            }}
+          >
+            <MenuItem value="PPA">PPA</MenuItem>
+            <MenuItem value="ResellerAdmin">Non-PPA</MenuItem>
+          </Select>
+
+          <Select
+            value={sessionUser.companyId}
+            size="small"
+            onChange={(event) =>
+              impersonateSessionUser({
+                role: sessionUser.role,
+                companyId: Number(event.target.value),
+              })
+            }
+            sx={{
+              minWidth: 220,
+              height: 34,
+              bgcolor: '#fff',
+              fontSize: 13,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#d8d8d8',
+              },
+            }}
+          >
+            {companies.map((company) => (
+              <MenuItem key={company.id} value={company.id}>
+                {company.name} ({company.type})
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+
         {/* Notifications */}
         <IconButton
           sx={{
@@ -83,7 +152,7 @@ function Header() {
             fontWeight: 600,
           }}
         >
-          ET
+          {initials}
         </Avatar>
       </Box>
     </Box>

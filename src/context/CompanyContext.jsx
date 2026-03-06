@@ -1,5 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { deleteHomepageConfig, getHomepageConfig, upsertHomepageConfig as upsertHomepageConfigApi } from '../api/customHomepageApi';
+import { sanitizeCustomHomepageHtml } from '../utils/sanitizeCustomHomepageHtml';
 
 const initialCompanies = [
   {
@@ -108,6 +110,7 @@ const initialCompanies = [
     id: 4,
     name: 'CoreFusion Tech',
     type: 'Reseller',
+    parentResellerId: 2,
     code: 'crvbm',
     logo: '⚙️',
     brandColor: '#dc3545',
@@ -143,6 +146,7 @@ const initialCompanies = [
     id: 5,
     name: 'D&H Cloud Solutions',
     type: 'Reseller',
+    parentResellerId: 3,
     code: 'lcvpd',
     logo: '📊',
     brandColor: '#17a2b8',
@@ -240,11 +244,44 @@ const companyPermissions = {
   deniedBehavior: 'disabled',
 };
 
+const initialSessionUser = {
+  id: 'ppa-1',
+  displayName: 'Erica Thomson',
+  initials: 'ET',
+  role: 'PPA',
+  companyId: 6,
+};
+
+const initialResellerHomepageById = {
+  2: {
+    enabled: true,
+    html: `
+<section style="font-family: Arial, sans-serif; padding: 24px; max-width: 820px; margin: 0 auto;">
+  <h1 style="margin-bottom: 8px; color: #12385b;">Welcome to BluePeak Partner Hub</h1>
+  <p style="margin-top: 0; color: #375066;">Important updates, onboarding links, and support resources for direct child companies.</p>
+  <div style="margin: 20px 0; padding: 16px; border: 1px solid #dbe7f1; border-radius: 8px; background: #f4f8fc;">
+    <h2 style="margin: 0 0 8px; color: #12385b;">What to do first</h2>
+    <ul style="margin: 0; padding-left: 20px; color: #2c3f52;">
+      <li>Review migration checklist.</li>
+      <li>Confirm your primary technical contact details.</li>
+      <li>Open a support ticket for branding onboarding.</li>
+    </ul>
+  </div>
+  <p style="margin-bottom: 0;"><a href="https://example.com/partner-help" target="_blank" rel="noreferrer">Partner Help Center</a></p>
+</section>
+`.trim(),
+    updatedAt: '2026-03-06T09:00:00Z',
+  },
+};
+
 const CompanyContext = createContext(null);
 
 export function CompanyProvider({ children }) {
   const [companies, setCompanies] = useState(initialCompanies);
   const [moveHistoryByCustomer, setMoveHistoryByCustomer] = useState(initialMoveHistory);
+  const [sessionUser, setSessionUser] = useState(initialSessionUser);
+  const [resellerHomepageById, setResellerHomepageById] = useState(initialResellerHomepageById);
+  const [homepageConfigLoading, setHomepageConfigLoading] = useState(false);
 
   const resellers = useMemo(() => companies.filter((company) => company.type === 'Reseller'), [companies]);
 
@@ -253,6 +290,182 @@ export function CompanyProvider({ children }) {
   const getPriceListById = (resellerId, priceListId) => {
     const reseller = findCompanyById(resellerId);
     return reseller?.priceLists?.find((priceList) => priceList.id === priceListId);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncHomepageConfigs = async () => {
+      setHomepageConfigLoading(true);
+
+      try {
+        const configs = await Promise.all(
+          resellers.map(async (reseller) => {
+            try {
+              const config = await getHomepageConfig(reseller.id);
+              return [reseller.id, config];
+            } catch {
+              return [reseller.id, null];
+            }
+          }),
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        setResellerHomepageById((previous) => {
+          const next = { ...previous };
+
+          configs.forEach(([resellerId, config]) => {
+            if (!config) {
+              return;
+            }
+
+            next[Number(resellerId)] = {
+              enabled: Boolean(config.enabled),
+              html: typeof config.html === 'string' ? config.html : '',
+              updatedAt: config.updatedAt || new Date().toISOString(),
+            };
+          });
+
+          return next;
+        });
+      } finally {
+        if (!cancelled) {
+          setHomepageConfigLoading(false);
+        }
+      }
+    };
+
+    syncHomepageConfigs();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resellers]);
+
+  const assertPpaPrivileges = () => {
+    if (sessionUser.role !== 'PPA') {
+      throw new Error('Only Platform Provider Admins can manage custom homepages.');
+    }
+  };
+
+  const getResellerHomepageConfig = (resellerId) => resellerHomepageById[Number(resellerId)] || null;
+
+  const upsertResellerHomepageConfig = async ({ resellerId, enabled, html }) => {
+    assertPpaPrivileges();
+
+    const reseller = findCompanyById(resellerId);
+
+    if (!reseller || reseller.type !== 'Reseller') {
+      throw new Error('Custom homepage can only be configured for reseller companies.');
+    }
+
+    const sanitizedHtml = sanitizeCustomHomepageHtml(html || '');
+    const trimmedHtml = sanitizedHtml.trim();
+    const canEnable = Boolean(enabled) && trimmedHtml.length > 0;
+
+    const candidateConfig = {
+      enabled: canEnable,
+      html: trimmedHtml,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const persistedConfig = await upsertHomepageConfigApi({
+      resellerId: reseller.id,
+      enabled: candidateConfig.enabled,
+      html: candidateConfig.html,
+    });
+
+    const nextConfig = {
+      enabled: Boolean(persistedConfig?.enabled),
+      html: typeof persistedConfig?.html === 'string' ? persistedConfig.html : candidateConfig.html,
+      updatedAt: persistedConfig?.updatedAt || candidateConfig.updatedAt,
+    };
+
+    setResellerHomepageById((previous) => ({
+      ...previous,
+      [reseller.id]: nextConfig,
+    }));
+
+    return {
+      config: nextConfig,
+      warnings: sanitizedHtml !== (html || '').trim() ? ['Disallowed HTML content was removed during sanitization.'] : [],
+    };
+  };
+
+  const clearResellerHomepageConfig = async (resellerId) => {
+    assertPpaPrivileges();
+
+    await deleteHomepageConfig(resellerId);
+
+    setResellerHomepageById((previous) => {
+      const next = { ...previous };
+      delete next[Number(resellerId)];
+      return next;
+    });
+  };
+
+  const getDirectParentResellerId = (company) => {
+    if (!company) {
+      return null;
+    }
+
+    if (company.type === 'Customer') {
+      return company.resellerId || null;
+    }
+
+    if (company.type === 'Reseller') {
+      return company.parentResellerId || null;
+    }
+
+    return null;
+  };
+
+  const getLandingHomepageForCompany = (companyId) => {
+    const company = findCompanyById(companyId);
+    const parentResellerId = getDirectParentResellerId(company);
+
+    if (!parentResellerId) {
+      return null;
+    }
+
+    const parentConfig = getResellerHomepageConfig(parentResellerId);
+
+    if (!parentConfig?.enabled || !parentConfig.html) {
+      return null;
+    }
+
+    return {
+      resellerId: parentResellerId,
+      html: parentConfig.html,
+      updatedAt: parentConfig.updatedAt,
+    };
+  };
+
+  const impersonateSessionUser = ({ role, companyId }) => {
+    const nextCompany = findCompanyById(companyId);
+
+    if (!nextCompany) {
+      throw new Error('Selected company is invalid.');
+    }
+
+    const normalizedRole = role === 'PPA' ? 'PPA' : 'ResellerAdmin';
+    const initials = nextCompany.name
+      .split(' ')
+      .map((token) => token.charAt(0))
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+
+    setSessionUser((previous) => ({
+      ...previous,
+      role: normalizedRole,
+      companyId: nextCompany.id,
+      displayName: normalizedRole === 'PPA' ? 'Erica Thomson' : `${nextCompany.name} Admin`,
+      initials: initials || 'NA',
+    }));
   };
 
   const moveCustomer = ({ customerId, destinationResellerId, destinationPriceListIds }) => {
@@ -331,6 +544,13 @@ export function CompanyProvider({ children }) {
     moveHistoryByCustomer,
     companyPermissions,
     getPriceListById,
+    sessionUser,
+    getResellerHomepageConfig,
+    upsertResellerHomepageConfig,
+    clearResellerHomepageConfig,
+    getLandingHomepageForCompany,
+    impersonateSessionUser,
+    homepageConfigLoading,
   };
 
   return <CompanyContext.Provider value={value}>{children}</CompanyContext.Provider>;
