@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Homepage Template</title>
+    <style>
+      :root {
+        --bg: #f5f5f7;
+        --card-bg: #ffffff;
+        --text: #1d1d1f;
+        --muted: #5f6368;
+        --border: #e6e6e9;
+        --blue: #127ad9;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .shell {
+        max-width: 1180px;
+        margin: 20px auto;
+        padding: 0 14px 20px;
+      }
+
+      .title {
+        margin: 4px 0 16px;
+        font-size: 52px;
+        letter-spacing: -0.02em;
+        font-weight: 700;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1.12fr);
+        gap: 16px;
+      }
+
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+      }
+
+      .hero {
+        background: linear-gradient(108deg, #1f2a4a 0%, #27335c 60%, #2f3d6f 100%);
+        border-color: #2b355d;
+        color: #f5f7ff;
+        padding: 30px 34px;
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        align-items: center;
+        min-height: 260px;
+      }
+
+      .hero h2 {
+        margin: 0 0 12px;
+        font-size: 52px;
+        line-height: 1;
+        letter-spacing: -0.01em;
+      }
+
+      .hero p {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.5;
+        color: #d6dbf3;
+        max-width: 540px;
+      }
+
+      .hero .cta {
+        margin-top: 26px;
+        display: inline-flex;
+        background: #ffffff;
+        color: #222;
+        text-decoration: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+        font-size: 16px;
+      }
+
+      .copilot-mark {
+        width: 280px;
+        height: 190px;
+        justify-self: end;
+        border-radius: 44px;
+        position: relative;
+        transform: rotate(-8deg);
+      }
+
+      .ribbon {
+        position: absolute;
+        border-radius: 36px;
+        filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.25));
+      }
+
+      .ribbon.a {
+        inset: 0 90px 32px 0;
+        background: linear-gradient(180deg, #30b4ff, #22a3f5 38%, #53c384 70%, #ffcf1e);
+      }
+
+      .ribbon.b {
+        inset: 68px 0 0 90px;
+        background: linear-gradient(180deg, #b05ee8, #f46e8d 56%, #f6b24e);
+      }
+
+      .ribbon.c {
+        inset: 70px 94px 0 84px;
+        background: linear-gradient(180deg, #33466f, #2a3556);
+        border-radius: 28px;
+      }
+
+      .announcements {
+        margin-top: 16px;
+        padding: 20px;
+      }
+
+      .section-title {
+        margin: 0 0 14px;
+        font-size: 28px;
+        line-height: 1.1;
+      }
+
+      .month {
+        margin: 20px 0 10px;
+        color: #585d67;
+        font-size: 16px;
+      }
+
+      .post {
+        border-top: 1px solid #ececf1;
+        padding-top: 14px;
+        margin-top: 14px;
+      }
+
+      .post:first-of-type {
+        border-top: 0;
+        margin-top: 0;
+        padding-top: 0;
+      }
+
+      .post h4 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+
+      .post p,
+      .post li {
+        margin: 0;
+        color: #5d6470;
+        line-height: 1.5;
+        font-size: 14px;
+      }
+
+      .post ul {
+        margin: 8px 0 10px 18px;
+        padding: 0;
+      }
+
+      .post .read-more {
+        display: inline-block;
+        margin-top: 10px;
+        color: var(--blue);
+        text-decoration: none;
+        font-size: 14px;
+      }
+
+      .side .card {
+        padding: 16px;
+        margin-bottom: 14px;
+      }
+
+      .side h3 {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
+
+      .links {
+        display: grid;
+        gap: 8px;
+      }
+
+      .links a {
+        display: flex;
+        justify-content: space-between;
+        text-decoration: none;
+        color: #2f3642;
+        font-size: 14px;
+      }
+
+      .links a span:last-child {
+        color: var(--blue);
+      }
+
+      .help-copy {
+        color: #606672;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .help-list {
+        margin: 10px 0 0 18px;
+        padding: 0;
+        color: #606672;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .logo-wall {
+        padding: 14px;
+      }
+
+      .logo-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .logo-badge {
+        border: 1px solid #e8e8eb;
+        border-radius: 8px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        color: #30445f;
+        background: #fff;
+      }
+
+      @media (max-width: 1100px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+
+        .copilot-mark {
+          justify-self: start;
+        }
+
+        .title {
+          font-size: 44px;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .title {
+          font-size: 34px;
+        }
+
+        .hero h2 {
+          font-size: 38px;
+        }
+
+        .hero {
+          padding: 24px;
+        }
+
+        .copilot-mark {
+          width: 220px;
+          height: 155px;
+        }
+
+        .logo-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <h1 class="title">Welcome</h1>
+
+      <div class="layout">
+        <div>
+          <section class="hero card">
+            <div>
+              <h2>New Possibilities with Copilot</h2>
+              <p>
+                Contact our dedicated Microsoft Specialist to learn more about incentives,
+                assessments, and training to enable Copilot for you and your clients.
+              </p>
+              <a class="cta" href="#">Explore Now</a>
+            </div>
+            <div class="copilot-mark" aria-hidden="true">
+              <div class="ribbon a"></div>
+              <div class="ribbon b"></div>
+              <div class="ribbon c"></div>
+            </div>
+          </section>
+
+          <section class="announcements card">
+            <h2 class="section-title">Latest Announcements</h2>
+            <div class="month">April, 2025</div>
+
+            <article class="post">
+              <h4>Price Increases on Annual/Triennial Term Microsoft NCE Subscriptions Billed Monthly</h4>
+              <p>
+                Microsoft pricelist updates include a 5% increase for annual/triennial-billed-monthly subscriptions.
+                Review and update pricing for upcoming renewals.
+              </p>
+            </article>
+
+            <article class="post">
+              <h4>Microsoft 365 Copilot CSP Getting Started 15% off promo extended!</h4>
+              <p>
+                The Microsoft 365 Copilot CSP Getting Started 15% off promo has been extended through June 30, 2025.
+              </p>
+              <ul>
+                <li>Extended deadline gives partners more time to close opportunities.</li>
+                <li>Discount applies for 10 to 300 licenses for 12 months.</li>
+                <li>Customers can optimize cash flow with monthly billing options.</li>
+              </ul>
+            </article>
+
+            <div class="month">March, 2025</div>
+            <article class="post">
+              <h4>Product Price Increases</h4>
+              <p>
+                Microsoft announced price updates on annual term products effective April 1, 2025.
+                Partners can view updated costs and prepare customer communication before renewal windows.
+              </p>
+              <a class="read-more" href="#">Read Full Announcement</a>
+            </article>
+          </section>
+        </div>
+
+        <aside class="side">
+          <section class="card">
+            <h3>Getting Started</h3>
+            <div class="links">
+              <a href="#"><span>D&amp;H Cloud Solutions Page</span><span>Visit</span></a>
+              <a href="#"><span>D&amp;H Cloud Solutions Support Center</span><span>Visit</span></a>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Marketplace Help</h3>
+            <div class="links">
+              <a href="#"><span>Become a Microsoft Indirect Reseller</span><span>Visit</span></a>
+              <a href="#"><span>Reporting Tool</span><span>Visit</span></a>
+              <a href="#"><span>Sales Quotation Tool</span><span>Visit</span></a>
+              <a href="#"><span>Video Tutorials</span><span>Visit</span></a>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Everything as a Service (XaaS)</h3>
+            <p class="help-copy">
+              Manage the entire customer lifecycle with a blended cloud marketplace that offers billing,
+              provisioning, and support in one monthly payment.
+            </p>
+            <ul class="help-list">
+              <li>Increase margin</li>
+              <li>Improve cash flow</li>
+              <li>Lower support costs</li>
+              <li>Create competitive differentiation</li>
+            </ul>
+          </section>
+
+          <section class="card logo-wall">
+            <div class="logo-grid" aria-label="Vendor logos">
+              <div class="logo-badge">Acronis</div>
+              <div class="logo-badge">AT&amp;T</div>
+              <div class="logo-badge">Avaya</div>
+              <div class="logo-badge">Axcient</div>
+              <div class="logo-badge">BitTitan</div>
+              <div class="logo-badge">Call2Teams</div>
+              <div class="logo-badge">Cameyo</div>
+              <div class="logo-badge">Carbonite</div>
+              <div class="logo-badge">Cisco</div>
+              <div class="logo-badge">ConnectWise</div>
+              <div class="logo-badge">Cox</div>
+              <div class="logo-badge">Dropbox</div>
+              <div class="logo-badge">ESET</div>
+              <div class="logo-badge">Google</div>
+              <div class="logo-badge">Kaspersky</div>
+              <div class="logo-badge">Microsoft</div>
+              <div class="logo-badge">Nerdio</div>
+              <div class="logo-badge">Nextiva</div>
+              <div class="logo-badge">Perch</div>
+              <div class="logo-badge">RingCentral</div>
+              <div class="logo-badge">Skill Me Up</div>
+              <div class="logo-badge">Sophos</div>
+              <div class="logo-badge">Spectrum</div>
+              <div class="logo-badge">Vade</div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </body>
+</html>

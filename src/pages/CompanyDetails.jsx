@@ -6,6 +6,9 @@ import {
   Box,
   Button,
   Breadcrumbs,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Link,
   Menu,
@@ -55,6 +58,7 @@ function ResellerCustomHomepageCard({
   const [enabled, setEnabled] = useState(initialEnabled);
   const [html, setHtml] = useState(initialHtml);
   const [sourceUrl, setSourceUrl] = useState(initialSourceUrl);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -67,34 +71,20 @@ function ResellerCustomHomepageCard({
     setMessage('');
     setErrorMessage('');
 
-    const trimmedUrl = sourceUrl.trim();
-
-    if (!trimmedUrl) {
-      setErrorMessage('Template API URL is required to fetch HTML.');
-      return;
-    }
-
-    try {
-      new URL(trimmedUrl);
-    } catch {
-      setErrorMessage('Template API URL must be a valid absolute URL.');
-      return;
-    }
-
     setIsFetching(true);
 
     try {
-      const response = await fetch(trimmedUrl);
+      const response = await fetch(`${import.meta.env.BASE_URL}mock/custom-homepage.html`);
 
       if (!response.ok) {
-        throw new Error(`Template API returned status ${response.status}.`);
+        throw new Error(`Template source returned status ${response.status}.`);
       }
 
       const fetchedHtml = await response.text();
       setHtml(fetchedHtml);
-      setMessage('HTML fetched from URL. Review preview and click Save Homepage to persist.');
+      setMessage('Static homepage template loaded. Save Homepage to persist configuration.');
     } catch (error) {
-      setErrorMessage(error.message || 'Failed to fetch HTML from URL.');
+      setErrorMessage(error.message || 'Failed to load static homepage template.');
     } finally {
       setIsFetching(false);
     }
@@ -142,9 +132,19 @@ function ResellerCustomHomepageCard({
 
   return (
     <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0', width: '100%' }}>
-      <Typography variant="h6" sx={{ color: '#333', fontWeight: 600, mb: 0.5 }}>
-        Custom Homepage
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 0.5 }}>
+        <Typography variant="h6" sx={{ color: '#333', fontWeight: 600 }}>
+          Custom Homepage
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={() => setPreviewOpen(true)}
+          disabled={!safePreviewHtml}
+          sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+        >
+          Preview
+        </Button>
+      </Box>
       <Typography sx={{ color: '#666', fontSize: 13, mb: 2 }}>
         PPA-only control for direct child companies of this reseller. Scripts and event handlers are removed during save.
       </Typography>
@@ -175,10 +175,10 @@ function ResellerCustomHomepageCard({
 
       <Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'center' }}>
         <TextField
-          label="Template API URL (optional)"
+          label="Template API URL"
           value={sourceUrl}
           onChange={(event) => setSourceUrl(event.target.value)}
-          placeholder="https://example.com/custom-homepage.html"
+          placeholder="https://api.partner.local/homepage-template"
           fullWidth
           disabled={globalLoading || isSaving || isResetting || isFetching}
         />
@@ -204,21 +204,6 @@ function ResellerCustomHomepageCard({
         sx={{ mb: 2 }}
       />
 
-      <Typography sx={{ fontSize: 12, color: '#666', mb: 1 }}>Preview</Typography>
-      <Paper sx={{ p: 2, border: '1px solid #efefef', boxShadow: 'none', minHeight: 120, mb: 2 }}>
-        {safePreviewHtml ? (
-          <Box
-            sx={{
-              '& img': { maxWidth: '100%', height: 'auto' },
-              '& a': { color: '#0056b3' },
-            }}
-            dangerouslySetInnerHTML={{ __html: safePreviewHtml }}
-          />
-        ) : (
-          <Typography sx={{ color: '#999', fontSize: 13 }}>No preview available. Paste HTML or fetch from URL.</Typography>
-        )}
-      </Paper>
-
       <Box sx={{ display: 'flex', gap: 1.5 }}>
         <Button
           variant="contained"
@@ -237,6 +222,26 @@ function ResellerCustomHomepageCard({
           {isResetting ? 'Removing...' : 'Remove Homepage'}
         </Button>
       </Box>
+
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="xl" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>Homepage Preview</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          {safePreviewHtml ? (
+            <Paper sx={{ border: '1px solid #e8e8e8', boxShadow: 'none', maxHeight: '78vh', overflow: 'auto' }}>
+              <Box
+                sx={{
+                  p: 2,
+                  '& img': { maxWidth: '100%', height: 'auto' },
+                  '& a': { color: '#0056b3' },
+                }}
+                dangerouslySetInnerHTML={{ __html: safePreviewHtml }}
+              />
+            </Paper>
+          ) : (
+            <Typography sx={{ color: '#999', fontSize: 14 }}>No preview available. Fetch template or paste HTML first.</Typography>
+          )}
+        </DialogContent>
+      </Dialog>
     </Paper>
   );
 }
@@ -527,14 +532,14 @@ function CompanyDetails() {
               <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
                 <Box>
                   <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.75 }}>COMPANY LOGO</Typography>
-                  <Avatar sx={{ width: 74, height: 74, bgcolor: '#3515b0', color: '#fff' }}>
+                  <Avatar sx={{ width: 74, height: 74, bgcolor: '#1f1f1f', color: '#fff' }}>
                     <Business sx={{ fontSize: 32 }} />
                   </Avatar>
                 </Box>
                 <Box>
                   <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.75 }}>BRAND COLOR</Typography>
-                  <Avatar sx={{ width: 74, height: 74, bgcolor: company?.brandColor || '#1e88e5', color: '#fff' }}>
-                    <Palette sx={{ fontSize: 30 }} />
+                  <Avatar sx={{ width: 74, height: 74, bgcolor: '#efefef', color: '#111' }}>
+                    <Palette sx={{ fontSize: 30, color: '#111' }} />
                   </Avatar>
                 </Box>
               </Box>
