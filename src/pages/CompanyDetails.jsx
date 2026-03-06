@@ -66,6 +66,7 @@ function ResellerCustomHomepageCard({
   const [isFetching, setIsFetching] = useState(false);
 
   const safePreviewHtml = sanitizeCustomHomepageHtml(html || '');
+  const previewSrcDoc = `<!doctype html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body>${safePreviewHtml}</body></html>`;
 
   const handleFetchHtml = async () => {
     setMessage('');
@@ -232,14 +233,17 @@ function ResellerCustomHomepageCard({
         <DialogTitle sx={{ pb: 1 }}>Homepage Preview</DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
           {safePreviewHtml ? (
-            <Paper sx={{ border: '1px solid #e8e8e8', boxShadow: 'none', maxHeight: '78vh', overflow: 'auto' }}>
+            <Paper sx={{ border: '1px solid #e8e8e8', boxShadow: 'none', overflow: 'hidden' }}>
               <Box
+                component="iframe"
+                title="Homepage preview"
+                srcDoc={previewSrcDoc}
                 sx={{
-                  p: 2,
-                  '& img': { maxWidth: '100%', height: 'auto' },
-                  '& a': { color: '#0056b3' },
+                  width: '100%',
+                  height: '78vh',
+                  border: 'none',
+                  bgcolor: '#fff',
                 }}
-                dangerouslySetInnerHTML={{ __html: safePreviewHtml }}
               />
             </Paper>
           ) : (

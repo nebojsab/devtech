@@ -9,6 +9,7 @@ function Home() {
 
   const customHomepage = getLandingHomepageForCompany(sessionUser.companyId);
   const safeHomepageHtml = customHomepage?.html ? sanitizeCustomHomepageHtml(customHomepage.html) : '';
+  const homepageSrcDoc = `<!doctype html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body>${safeHomepageHtml}</body></html>`;
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', width: '100%' }}>
@@ -50,20 +51,12 @@ function Home() {
       )}
 
       {safeHomepageHtml && (
-        <Paper sx={{ p: 0, border: '1px solid #e0e0e0', boxShadow: 'none', bgcolor: '#ffffff' }}>
+        <Paper sx={{ p: 0, border: '1px solid #e0e0e0', boxShadow: 'none', bgcolor: '#ffffff', overflow: 'hidden' }}>
           <Box
-            sx={{
-              minHeight: 340,
-              color: '#333',
-              '& a': {
-                color: '#444',
-              },
-              '& img': {
-                maxWidth: '100%',
-                height: 'auto',
-              },
-            }}
-            dangerouslySetInnerHTML={{ __html: safeHomepageHtml }}
+            component="iframe"
+            title="Custom homepage"
+            srcDoc={homepageSrcDoc}
+            sx={{ width: '100%', height: '76vh', border: 'none', bgcolor: '#fff' }}
           />
         </Paper>
       )}

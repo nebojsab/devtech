@@ -430,6 +430,23 @@ export function CompanyProvider({ children }) {
 
   const getLandingHomepageForCompany = (companyId) => {
     const company = findCompanyById(companyId);
+
+    if (!company) {
+      return null;
+    }
+
+    if (company.type === 'Reseller') {
+      const ownConfig = getResellerHomepageConfig(company.id);
+
+      if (ownConfig?.enabled && ownConfig.html) {
+        return {
+          resellerId: company.id,
+          html: ownConfig.html,
+          updatedAt: ownConfig.updatedAt,
+        };
+      }
+    }
+
     const parentResellerId = getDirectParentResellerId(company);
 
     if (!parentResellerId) {
