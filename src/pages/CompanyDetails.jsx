@@ -273,9 +273,9 @@ function CompanyDetails() {
   const currentPriceListNames = (company?.currentPriceListIds || []).map(
     (priceListId) => getPriceListById(company.resellerId, priceListId)?.name || priceListId,
   );
-  const showHomepageConfigTab = company?.type === 'Reseller' && isPpaUser;
+  const showHomepageConfigTab = company?.type === 'Reseller';
   const homepageConfigTabIndex = showHomepageConfigTab ? 6 : -1;
-  const auditTabIndex = company?.type === 'Reseller' ? (showHomepageConfigTab ? 7 : 6) : 5;
+  const auditTabIndex = company?.type === 'Reseller' ? 7 : 5;
 
   const moveHistory = moveHistoryByCustomer[company?.id] || [];
 
@@ -510,12 +510,34 @@ function CompanyDetails() {
       </Tabs>
 
       {tabValue === 0 && (
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', width: '100%' }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: '32px',
+            width: '100%',
+          }}
+        >
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0', width: '100%' }}>
               <Typography variant="h6" sx={{ color: '#333', fontWeight: 600, mb: 2 }}>
                 Company Information
               </Typography>
+
+              <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
+                <Box>
+                  <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.75 }}>COMPANY LOGO</Typography>
+                  <Avatar sx={{ width: 74, height: 74, bgcolor: '#3515b0', color: '#fff' }}>
+                    <Business sx={{ fontSize: 32 }} />
+                  </Avatar>
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.75 }}>BRAND COLOR</Typography>
+                  <Avatar sx={{ width: 74, height: 74, bgcolor: company?.brandColor || '#1e88e5', color: '#fff' }}>
+                    <Palette sx={{ fontSize: 30 }} />
+                  </Avatar>
+                </Box>
+              </Box>
 
               {company?.type === 'Customer' && (
                 <Box sx={{ mb: 2 }}>
@@ -542,22 +564,22 @@ function CompanyDetails() {
 
               <Box sx={{ mb: 2.5 }}>
                 <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.5 }}>REFERENCE ID</Typography>
-                <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.referenceId}</Typography>
+                <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.referenceId || '-'}</Typography>
               </Box>
 
               <Box sx={{ mb: 2.5 }}>
                 <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.5 }}>STREET ADDRESS</Typography>
-                <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.streetAddress}</Typography>
+                <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.streetAddress || '-'}</Typography>
               </Box>
 
               <Box sx={{ mb: 2.5 }}>
                 <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.5 }}>COMPANY PHONE</Typography>
-                <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.phone}</Typography>
+                <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.phone || '-'}</Typography>
               </Box>
 
               <Box>
                 <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.5 }}>CITY</Typography>
-                <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.city}</Typography>
+                <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.city || '-'}</Typography>
               </Box>
             </Paper>
           </Box>
@@ -571,42 +593,38 @@ function CompanyDetails() {
               <Box sx={{ mb: 2.5 }}>
                 <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.5 }}>PRIMARY CONTACT</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.primaryContact}</Typography>
-                  <Typography sx={{ color: '#999', fontSize: 13 }}>{company?.primaryContactEmail}</Typography>
+                  <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.primaryContact || '-'}</Typography>
+                  <Typography sx={{ color: '#999', fontSize: 13 }}>{company?.primaryContactEmail || '-'}</Typography>
                 </Box>
               </Box>
 
               <Box sx={{ mb: 2.5 }}>
                 <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.5 }}>TECHNICAL CONTACT</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.technicalContact}</Typography>
-                  <Typography sx={{ color: '#999', fontSize: 13 }}>{company?.technicalContactEmail}</Typography>
+                  <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.technicalContact || '-'}</Typography>
+                  <Typography sx={{ color: '#999', fontSize: 13 }}>{company?.technicalContactEmail || '-'}</Typography>
                 </Box>
               </Box>
 
               <Box>
                 <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.5 }}>BILLING CONTACT</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.billingContact}</Typography>
-                  <Typography sx={{ color: '#999', fontSize: 13 }}>{company?.billingContactEmail}</Typography>
+                  <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.billingContact || '-'}</Typography>
+                  <Typography sx={{ color: '#999', fontSize: 13 }}>{company?.billingContactEmail || '-'}</Typography>
                 </Box>
               </Box>
             </Paper>
 
             <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0', width: '100%' }}>
               <Typography variant="h6" sx={{ color: '#333', fontWeight: 600, mb: 2 }}>
-                Brand
+                Support
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Avatar sx={{ width: 80, height: 80, bgcolor: '#f5f5f5', color: '#111' }}>
-                  <Business sx={{ fontSize: 36 }} />
-                </Avatar>
-                <Avatar sx={{ width: 80, height: 80, bgcolor: '#111', color: '#fff' }}>
-                  <Palette sx={{ fontSize: 32 }} />
-                </Avatar>
+
+              <Box>
+                <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.5 }}>SUPPORT EMAIL</Typography>
+                <Typography sx={{ color: '#333', fontSize: 14 }}>{company?.supportEmail || '-'}</Typography>
               </Box>
             </Paper>
-
           </Box>
         </Box>
       )}
