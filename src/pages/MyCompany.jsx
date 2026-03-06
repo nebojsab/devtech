@@ -76,14 +76,14 @@ function MyCompany() {
             <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
               <Box>
                 <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.75 }}>COMPANY LOGO</Typography>
-                <Avatar sx={{ width: 74, height: 74, bgcolor: '#3515b0', color: '#fff' }}>
+                <Avatar sx={{ width: 74, height: 74, bgcolor: '#1f1f1f', color: '#fff' }}>
                   <Business sx={{ fontSize: 32 }} />
                 </Avatar>
               </Box>
               <Box>
                 <Typography sx={{ fontSize: 11, color: '#999', fontWeight: 600, mb: 0.75 }}>BRAND COLOR</Typography>
-                <Avatar sx={{ width: 74, height: 74, bgcolor: myCompanyProfile.brandColor || '#1e88e5', color: '#fff' }}>
-                  <Palette sx={{ fontSize: 30 }} />
+                <Avatar sx={{ width: 74, height: 74, bgcolor: '#efefef', color: '#111' }}>
+                  <Palette sx={{ fontSize: 30, color: '#111' }} />
                 </Avatar>
               </Box>
             </Box>
