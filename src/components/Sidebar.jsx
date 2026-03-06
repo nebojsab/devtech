@@ -19,7 +19,7 @@ import {
 } from '@mui/icons-material';
 
 const menuItems = [
-  { icon: Store, label: 'Companies', to: '/' },
+  { icon: Store, label: 'Companies', to: '/companies' },
   { icon: Handshake, label: 'Vendors' },
   { icon: Inventory, label: 'Catalog' },
   { icon: LocalOffer, label: 'Pricelists' },
@@ -32,7 +32,8 @@ function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isCompaniesRoute = location.pathname === '/' || location.pathname.startsWith('/company/');
+  const isHomeRoute = location.pathname === '/home' || location.pathname === '/';
+  const isCompaniesRoute = location.pathname === '/companies' || location.pathname.startsWith('/company/');
   const isMyCompanyRoute = location.pathname === '/my-company';
 
   return (
@@ -47,9 +48,18 @@ function Sidebar() {
       }}
     >
       {/* Logo/Title */}
-      <Box sx={{ p: 2, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0' }}>
+      <Box
+        onClick={() => navigate('/home')}
+        sx={{
+          p: 2,
+          bgcolor: '#ffffff',
+          borderBottom: '1px solid #e0e0e0',
+          cursor: 'pointer',
+          '&:hover': { bgcolor: '#fafafa' },
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Store sx={{ fontSize: 28, color: '#666' }} />
+          <Store sx={{ fontSize: 28, color: isHomeRoute ? '#333' : '#666' }} />
           <Box sx={{ fontSize: 14, fontWeight: 600, color: '#333' }}>Logo</Box>
         </Box>
       </Box>

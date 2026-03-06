@@ -1,8 +1,9 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import Home from './pages/Home';
 import Companies from './pages/Companies';
 import CompanyDetails from './pages/CompanyDetails';
 import MyCompany from './pages/MyCompany';
@@ -18,9 +19,12 @@ function App() {
             <Header />
             <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
               <Routes>
-                <Route path="/" element={<Companies />} />
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/companies" element={<Companies />} />
                 <Route path="/my-company" element={<MyCompany />} />
                 <Route path="/company/:id" element={<CompanyDetails />} />
+                <Route path="*" element={<Navigate to="/home" replace />} />
               </Routes>
             </Box>
           </Box>

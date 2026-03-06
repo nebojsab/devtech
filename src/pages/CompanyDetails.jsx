@@ -93,6 +93,12 @@ function ResellerCustomHomepageCard({
   const handleSave = async () => {
     setMessage('');
     setErrorMessage('');
+
+    if (enabled && !safePreviewHtml.trim()) {
+      setErrorMessage('Load or paste HTML before saving while custom homepage is enabled.');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -136,14 +142,32 @@ function ResellerCustomHomepageCard({
         <Typography variant="h6" sx={{ color: '#333', fontWeight: 600 }}>
           Custom Homepage
         </Typography>
-        <Button
-          variant="outlined"
-          onClick={() => setPreviewOpen(true)}
-          disabled={!safePreviewHtml}
-          sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
-        >
-          Preview
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={globalLoading || isSaving || isResetting || isFetching}
+            sx={{ textTransform: 'none', bgcolor: '#333', '&:hover': { bgcolor: '#555' } }}
+          >
+            {isSaving ? 'Saving...' : 'Save Homepage'}
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleReset}
+            disabled={globalLoading || isSaving || isResetting || isFetching}
+            sx={{ textTransform: 'none' }}
+          >
+            {isResetting ? 'Removing...' : 'Remove Homepage'}
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => setPreviewOpen(true)}
+            disabled={!safePreviewHtml}
+            sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+          >
+            Preview
+          </Button>
+        </Box>
       </Box>
       <Typography sx={{ color: '#666', fontSize: 13, mb: 2 }}>
         PPA-only control for direct child companies of this reseller. Scripts and event handlers are removed during save.
@@ -203,25 +227,6 @@ function ResellerCustomHomepageCard({
         disabled={globalLoading || isSaving || isResetting || isFetching}
         sx={{ mb: 2 }}
       />
-
-      <Box sx={{ display: 'flex', gap: 1.5 }}>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={globalLoading || isSaving || isResetting || isFetching}
-          sx={{ textTransform: 'none', bgcolor: '#333', '&:hover': { bgcolor: '#555' } }}
-        >
-          {isSaving ? 'Saving...' : 'Save Homepage'}
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={handleReset}
-          disabled={globalLoading || isSaving || isResetting || isFetching}
-          sx={{ textTransform: 'none' }}
-        >
-          {isResetting ? 'Removing...' : 'Remove Homepage'}
-        </Button>
-      </Box>
 
       <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="xl" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>Homepage Preview</DialogTitle>
@@ -395,7 +400,7 @@ function CompanyDetails() {
       <Box sx={{ mb: 3 }}>
         <Breadcrumbs sx={{ mb: 1 }}>
           <Link
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/companies')}
             sx={{
               cursor: 'pointer',
               color: '#999',

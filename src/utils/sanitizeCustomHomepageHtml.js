@@ -40,5 +40,16 @@ export function sanitizeCustomHomepageHtml(rawHtml) {
     });
   });
 
-  return documentFragment.body.innerHTML.trim();
+  const preservedStyles = Array.from(documentFragment.head.querySelectorAll('style'))
+    .map((styleTag) => styleTag.outerHTML)
+    .join('\n')
+    .trim();
+
+  const sanitizedBody = documentFragment.body.innerHTML.trim();
+
+  if (preservedStyles && sanitizedBody) {
+    return `${preservedStyles}\n${sanitizedBody}`;
+  }
+
+  return preservedStyles || sanitizedBody;
 }
