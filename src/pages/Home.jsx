@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import { HourglassEmpty } from '@mui/icons-material';
 import { useCompanyContext } from '../context/CompanyContext';
@@ -6,10 +6,30 @@ import { sanitizeCustomHomepageHtml } from '../utils/sanitizeCustomHomepageHtml'
 
 function Home() {
   const { sessionUser, getLandingHomepageForCompany } = useCompanyContext();
+  const iframeRef = useRef(null);
+  const [iframeHeight, setIframeHeight] = useState(900);
 
   const customHomepage = getLandingHomepageForCompany(sessionUser.companyId);
   const safeHomepageHtml = customHomepage?.html ? sanitizeCustomHomepageHtml(customHomepage.html) : '';
   const homepageSrcDoc = `<!doctype html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body>${safeHomepageHtml}</body></html>`;
+
+  const syncIframeHeight = useCallback(() => {
+    const iframe = iframeRef.current;
+
+    if (!iframe?.contentDocument) {
+      return;
+    }
+
+    const doc = iframe.contentDocument;
+    const nextHeight = Math.max(
+      doc.body?.scrollHeight || 0,
+      doc.documentElement?.scrollHeight || 0,
+      doc.body?.offsetHeight || 0,
+      doc.documentElement?.offsetHeight || 0,
+    );
+
+    setIframeHeight(nextHeight > 0 ? nextHeight : 900);
+  }, []);
   const shouldShowPageHeading = !safeHomepageHtml;
 
   return (
@@ -57,9 +77,15 @@ function Home() {
         <Paper sx={{ p: 0, border: '1px solid #e0e0e0', boxShadow: 'none', bgcolor: '#ffffff', overflow: 'hidden' }}>
           <Box
             component="iframe"
+            ref={iframeRef}
             title="Custom homepage"
             srcDoc={homepageSrcDoc}
-            sx={{ width: '100%', height: '76vh', border: 'none', bgcolor: '#fff' }}
+            onLoad={() => {
+              syncIframeHeight();
+              window.setTimeout(syncIframeHeight, 120);
+              window.setTimeout(syncIframeHeight, 350);
+            }}
+            sx={{ width: '100%', height: `${iframeHeight}px`, border: 'none', bgcolor: '#fff' }}
           />
         </Paper>
       )}
