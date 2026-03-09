@@ -252,6 +252,8 @@ const initialSessionUser = {
   companyId: 6,
 };
 
+const initialSessionPresetId = 'custom';
+
 const initialResellerHomepageById = {
   2: {
     enabled: true,
@@ -281,6 +283,7 @@ export function CompanyProvider({ children }) {
   const [companies, setCompanies] = useState(initialCompanies);
   const [moveHistoryByCustomer, setMoveHistoryByCustomer] = useState(initialMoveHistory);
   const [sessionUser, setSessionUser] = useState(initialSessionUser);
+  const [sessionPresetId, setSessionPresetId] = useState(initialSessionPresetId);
   const [resellerHomepageById, setResellerHomepageById] = useState(initialResellerHomepageById);
   const [homepageConfigLoading, setHomepageConfigLoading] = useState(false);
 
@@ -488,6 +491,58 @@ export function CompanyProvider({ children }) {
       displayName: normalizedRole === 'PPA' ? 'Erica Thomson' : `${nextCompany.name} Admin`,
       initials: initials || 'NA',
     }));
+
+    setSessionPresetId('custom');
+  };
+
+  const sessionAccountPresets = useMemo(() => {
+    const resellerPresets = resellers.map((reseller) => ({
+      id: `reseller-admin-${reseller.id}`,
+      label: `${reseller.name} Admin`,
+      role: 'ResellerAdmin',
+      companyId: reseller.id,
+    }));
+
+    return [
+      {
+        id: 'ppa-default',
+        label: 'PPA Admin',
+        role: 'PPA',
+        companyId: resellers[0]?.id || 1,
+      },
+      ...resellerPresets,
+    ];
+  }, [resellers]);
+
+  const switchSessionPreset = (presetId) => {
+    const preset = sessionAccountPresets.find((candidate) => candidate.id === presetId);
+
+    if (!preset) {
+      throw new Error('Selected session preset is invalid.');
+    }
+
+    const company = findCompanyById(preset.companyId);
+
+    if (!company) {
+      throw new Error('Selected company is invalid.');
+    }
+
+    const initials = company.name
+      .split(' ')
+      .map((token) => token.charAt(0))
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+
+    setSessionUser((previous) => ({
+      ...previous,
+      role: preset.role,
+      companyId: company.id,
+      displayName: preset.role === 'PPA' ? 'Erica Thomson' : `${company.name} Admin`,
+      initials: initials || 'NA',
+    }));
+
+    setSessionPresetId(preset.id);
   };
 
   const moveCustomer = ({ customerId, destinationResellerId, destinationPriceListIds }) => {
@@ -567,6 +622,9 @@ export function CompanyProvider({ children }) {
     companyPermissions,
     getPriceListById,
     sessionUser,
+    sessionPresetId,
+    sessionAccountPresets,
+    switchSessionPreset,
     getResellerHomepageConfig,
     upsertResellerHomepageConfig,
     clearResellerHomepageConfig,

@@ -14,7 +14,8 @@ import { Search, Notifications } from '@mui/icons-material';
 import { useCompanyContext } from '../context/CompanyContext';
 
 function Header() {
-  const { sessionUser, companies, impersonateSessionUser } = useCompanyContext();
+  const { sessionUser, sessionPresetId, sessionAccountPresets, switchSessionPreset, companies, impersonateSessionUser } =
+    useCompanyContext();
 
   const initials =
     sessionUser.initials ||
@@ -75,6 +76,28 @@ function Header() {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
           <Typography sx={{ fontSize: 11, color: '#777', fontWeight: 600 }}>SESSION</Typography>
+
+          <Select
+            value={sessionPresetId}
+            size="small"
+            onChange={(event) => switchSessionPreset(event.target.value)}
+            sx={{
+              minWidth: 220,
+              height: 34,
+              bgcolor: '#fff',
+              fontSize: 13,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#d8d8d8',
+              },
+            }}
+          >
+            <MenuItem value="custom">Custom session</MenuItem>
+            {sessionAccountPresets.map((preset) => (
+              <MenuItem key={preset.id} value={preset.id}>
+                {preset.label}
+              </MenuItem>
+            ))}
+          </Select>
 
           <Select
             value={sessionUser.role}

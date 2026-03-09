@@ -10,12 +10,15 @@ function Home() {
   const customHomepage = getLandingHomepageForCompany(sessionUser.companyId);
   const safeHomepageHtml = customHomepage?.html ? sanitizeCustomHomepageHtml(customHomepage.html) : '';
   const homepageSrcDoc = `<!doctype html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body>${safeHomepageHtml}</body></html>`;
+  const shouldShowPageHeading = !safeHomepageHtml;
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', width: '100%' }}>
-      <Typography variant="h4" sx={{ color: '#222', fontWeight: 700, mb: 2 }}>
-        Welcome
-      </Typography>
+      {shouldShowPageHeading && (
+        <Typography variant="h4" sx={{ color: '#222', fontWeight: 700, mb: 2 }}>
+          Welcome
+        </Typography>
+      )}
 
       {!safeHomepageHtml && (
         <Box

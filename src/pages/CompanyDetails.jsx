@@ -46,6 +46,59 @@ const formatAuditTime = (value) =>
     timeZone: 'UTC',
   }).format(new Date(value));
 
+const homepageHtmlPlaceholder = `<style>
+  :root {
+    --bg: #f5f5f7;
+    --card-bg: #ffffff;
+    --text: #1d1d1f;
+    --muted: #5f6368;
+    --border: #e6e6e9;
+    --accent: #6e6e73;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .shell {
+    max-width: 1120px;
+    margin: 20px auto;
+    padding: 0 14px 20px;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #d8d8dc, #bcbcc3);
+    border-radius: 16px;
+    min-height: 280px;
+    padding: 28px;
+  }
+
+  .hero h1 {
+    margin: 0 0 10px;
+    font-size: 42px;
+    line-height: 1.1;
+  }
+
+  .hero p {
+    margin: 0;
+    color: var(--muted);
+  }
+</style>
+
+<main class="shell">
+  <section class="hero">
+    <h1>Welcome</h1>
+    <p>Use this template as your reseller homepage starter.</p>
+  </section>
+</main>`;
+
 function ResellerCustomHomepageCard({
   resellerId,
   initialEnabled,
@@ -222,11 +275,40 @@ function ResellerCustomHomepageCard({
         value={html}
         onChange={(event) => setHtml(event.target.value)}
         multiline
-        minRows={10}
-        placeholder="Paste static HTML for direct child companies. JavaScript is not allowed."
+        placeholder={homepageHtmlPlaceholder}
         fullWidth
         disabled={globalLoading || isSaving || isResetting || isFetching}
-        sx={{ mb: 2 }}
+        sx={{
+          mb: 2,
+          '& .MuiInputBase-root': {
+            alignItems: 'flex-start',
+            bgcolor: '#f2f2f3',
+            height: 'calc(100vh - 280px)',
+            maxHeight: 'calc(100vh - 280px)',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+            '& fieldset': {
+              borderColor: '#cfd1d4',
+            },
+            '&:hover fieldset': {
+              borderColor: '#b8bcc1',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#8b9198',
+            },
+          },
+          '& .MuiInputBase-inputMultiline': {
+            color: '#2d3136',
+            fontSize: 13,
+            lineHeight: 1.55,
+            letterSpacing: 0,
+            height: '100% !important',
+            overflow: 'auto !important',
+          },
+          '& .MuiInputBase-inputMultiline::placeholder': {
+            color: '#60666d',
+            opacity: 1,
+          },
+        }}
       />
 
       <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="xl" fullWidth>
