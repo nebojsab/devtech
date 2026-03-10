@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Editor from '@monaco-editor/react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -6,9 +7,6 @@ import {
   Box,
   Button,
   Breadcrumbs,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   IconButton,
   Link,
   Menu,
@@ -18,6 +16,8 @@ import {
   Switch,
   Tab,
   Tabs,
+  ToggleButton,
+  ToggleButtonGroup,
   TextField,
   Tooltip,
   Typography,
@@ -111,7 +111,7 @@ function ResellerCustomHomepageCard({
   const [enabled, setEnabled] = useState(initialEnabled);
   const [html, setHtml] = useState(initialHtml);
   const [sourceUrl, setSourceUrl] = useState(initialSourceUrl);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState('preview');
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -213,14 +213,6 @@ function ResellerCustomHomepageCard({
           >
             {isResetting ? 'Removing...' : 'Remove Homepage'}
           </Button>
-          <Button
-            variant="outlined"
-            onClick={() => setPreviewOpen(true)}
-            disabled={!safePreviewHtml}
-            sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
-          >
-            Preview
-          </Button>
         </Box>
       </Box>
       <Typography sx={{ color: '#666', fontSize: 13, mb: 2 }}>
@@ -239,25 +231,33 @@ function ResellerCustomHomepageCard({
         </Alert>
       )}
 
-      <FormControlLabel
-        control={
-          <Switch
-            checked={enabled}
-            disabled={globalLoading || isSaving || isResetting || isFetching}
-            onChange={(event) => setEnabled(event.target.checked)}
-          />
-        }
-        label={enabled ? 'Custom homepage enabled: ON' : 'Custom homepage enabled: OFF'}
-        sx={{ mb: 1 }}
-      />
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1.25,
+          mb: 2,
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
+        <FormControlLabel
+          control={
+            <Switch
+              checked={enabled}
+              disabled={globalLoading || isSaving || isResetting || isFetching}
+              onChange={(event) => setEnabled(event.target.checked)}
+            />
+          }
+          label={enabled ? 'Enabled: ON' : 'Enabled: OFF'}
+          sx={{ mr: 0.5, ml: 0, whiteSpace: 'nowrap' }}
+        />
 
-      <Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'center' }}>
         <TextField
           label="Template API URL"
           value={sourceUrl}
           onChange={(event) => setSourceUrl(event.target.value)}
           placeholder="https://api.partner.local/homepage-template"
-          fullWidth
+          sx={{ flex: '1 1 340px', minWidth: 240 }}
           disabled={globalLoading || isSaving || isResetting || isFetching}
         />
         <Button
@@ -268,71 +268,177 @@ function ResellerCustomHomepageCard({
         >
           {isFetching ? 'Fetching...' : 'Fetch HTML'}
         </Button>
+
+        <ToggleButtonGroup
+          value={editorMode}
+          exclusive
+          onChange={(_, newMode) => {
+            if (newMode) {
+              setEditorMode(newMode);
+            }
+          }}
+          sx={{
+            border: '1px solid #c8ccd2',
+            borderRadius: 1,
+            p: 0.25,
+            bgcolor: '#f3f5f8',
+            '& .MuiToggleButtonGroup-grouped': {
+              border: 'none',
+              minWidth: 104,
+              minHeight: 34,
+              textTransform: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#4f5d6f',
+              borderRadius: 0.75,
+              px: 1.5,
+              py: 0.5,
+            },
+            '& .MuiToggleButtonGroup-grouped:not(:last-of-type)': {
+              borderRight: '1px solid #d7dce3',
+              mr: 0.25,
+            },
+            '& .MuiToggleButton-root.Mui-selected': {
+              color: '#16181b',
+              bgcolor: '#e3e5e8',
+            },
+            '& .MuiToggleButton-root.Mui-selected:hover': {
+              bgcolor: '#d8dbdf',
+            },
+          }}
+        >
+          <ToggleButton value="preview">Preview</ToggleButton>
+          <ToggleButton value="edit">Code</ToggleButton>
+        </ToggleButtonGroup>
       </Box>
 
-      <TextField
-        label="Static HTML"
-        value={html}
-        onChange={(event) => setHtml(event.target.value)}
-        multiline
-        placeholder={homepageHtmlPlaceholder}
-        fullWidth
-        disabled={globalLoading || isSaving || isResetting || isFetching}
-        sx={{
-          mb: 2,
-          '& .MuiInputBase-root': {
-            alignItems: 'flex-start',
-            bgcolor: '#f2f2f3',
-            height: 'calc(100vh - 280px)',
-            maxHeight: 'calc(100vh - 280px)',
-            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            '& fieldset': {
-              borderColor: '#cfd1d4',
-            },
-            '&:hover fieldset': {
-              borderColor: '#b8bcc1',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#8b9198',
-            },
-          },
-          '& .MuiInputBase-inputMultiline': {
-            color: '#2d3136',
-            fontSize: 13,
-            lineHeight: 1.55,
-            letterSpacing: 0,
-            height: '100% !important',
-            overflow: 'auto !important',
-          },
-          '& .MuiInputBase-inputMultiline::placeholder': {
-            color: '#60666d',
-            opacity: 1,
-          },
-        }}
-      />
+      <Box sx={{ mb: 2 }}>
 
-      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="xl" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>Homepage Preview</DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
-          {safePreviewHtml ? (
-            <Paper sx={{ border: '1px solid #e8e8e8', boxShadow: 'none', overflow: 'hidden' }}>
+        {editorMode === 'preview' && (
+          <Paper sx={{ border: '1px solid #e0e2e6', boxShadow: 'none', overflow: 'hidden' }}>
+            {safePreviewHtml ? (
               <Box
                 component="iframe"
-                title="Homepage preview"
+                title="Inline homepage preview"
                 srcDoc={previewSrcDoc}
                 sx={{
                   width: '100%',
-                  height: '78vh',
+                  height: 'calc(100vh - 360px)',
+                  minHeight: 360,
                   border: 'none',
                   bgcolor: '#fff',
                 }}
               />
-            </Paper>
-          ) : (
-            <Typography sx={{ color: '#999', fontSize: 14 }}>No preview available. Fetch template or paste HTML first.</Typography>
-          )}
-        </DialogContent>
-      </Dialog>
+            ) : (
+              <Box sx={{ px: 2, py: 3 }}>
+                <Typography sx={{ color: '#80858b', fontSize: 14 }}>
+                  No preview available. Fetch template or paste HTML first.
+                </Typography>
+              </Box>
+            )}
+          </Paper>
+        )}
+
+        {editorMode === 'edit' && (
+          <Paper sx={{ border: '1px solid #2d333b', boxShadow: 'none', overflow: 'hidden', bgcolor: '#0f1720' }}>
+            <Box
+              sx={{
+                px: 1.5,
+                py: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                bgcolor: '#111b27',
+                borderBottom: '1px solid #243142',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: '#ff5f56' }} />
+                <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: '#ffbd2f' }} />
+                <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: '#27c93f' }} />
+              </Box>
+              <Typography sx={{ color: '#9db0c7', fontSize: 12, fontWeight: 600, letterSpacing: 0.25 }}>
+                homepage.html
+              </Typography>
+              <Box sx={{ width: 36 }} />
+            </Box>
+
+            <Box sx={{ height: 'calc(100vh - 360px)', minHeight: 360 }}>
+              <Editor
+                language="html"
+                theme="vs-dark"
+                value={html}
+                onChange={(value) => setHtml(value ?? '')}
+                options={{
+                  automaticLayout: true,
+                  minimap: { enabled: false },
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  wordWrap: 'off',
+                  tabSize: 2,
+                  fontSize: 13,
+                  lineHeight: 21,
+                  fontFamily:
+                    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                }}
+              />
+            </Box>
+          </Paper>
+        )}
+      </Box>
+    </Paper>
+  );
+}
+
+function ResellerCustomHomepageReadOnlyCard({ config, loading }) {
+  const safePreviewHtml = sanitizeCustomHomepageHtml(config?.html || '');
+  const hasHomepage = Boolean(safePreviewHtml.trim());
+  const previewSrcDoc = `<!doctype html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body>${safePreviewHtml}</body></html>`;
+
+  return (
+    <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0', width: '100%' }}>
+      <Typography variant="h6" sx={{ color: '#333', fontWeight: 600, mb: 0.5 }}>
+        Custom Homepage
+      </Typography>
+      <Typography sx={{ color: '#666', fontSize: 13, mb: 2 }}>
+        Read-only view. Only Platform Provider Admin users can set up or edit custom homepage HTML for resellers.
+      </Typography>
+
+      {loading && <Typography sx={{ color: '#777', fontSize: 14 }}>Loading homepage configuration...</Typography>}
+
+      {!loading && hasHomepage && (
+        <Paper sx={{ border: '1px solid #e0e2e6', boxShadow: 'none', overflow: 'hidden' }}>
+          <Box
+            component="iframe"
+            title="Read-only homepage preview"
+            srcDoc={previewSrcDoc}
+            sx={{
+              width: '100%',
+              height: 'calc(100vh - 360px)',
+              minHeight: 360,
+              border: 'none',
+              bgcolor: '#fff',
+            }}
+          />
+        </Paper>
+      )}
+
+      {!loading && !hasHomepage && (
+        <Paper
+          sx={{
+            border: '1px dashed #d0d0d0',
+            boxShadow: 'none',
+            px: 2,
+            py: 3,
+            bgcolor: '#fafafa',
+          }}
+        >
+          <Typography sx={{ color: '#555', fontSize: 14, fontWeight: 600, mb: 0.5 }}>No custom homepage yet.</Typography>
+          <Typography sx={{ color: '#777', fontSize: 13 }}>
+            Only Platform Provider Admin can set up the custom HTML homepage for reseller companies.
+          </Typography>
+        </Paper>
+      )}
     </Paper>
   );
 }
@@ -601,7 +707,7 @@ function CompanyDetails() {
         <Tab label="Pricelists" />
         <Tab label="Services" />
         {company?.type === 'Reseller' && <Tab label="Companies" />}
-        {showHomepageConfigTab && <Tab label="Home Page Configuration" />}
+        {showHomepageConfigTab && <Tab label="Home Page" />}
         <Tab label="Audit Log" />
       </Tabs>
 
@@ -727,8 +833,6 @@ function CompanyDetails() {
 
       {tabValue === homepageConfigTabIndex && (
         <Box sx={{ width: '100%' }}>
-          {!isPpaUser && <Alert severity="warning">Only Platform Provider Admin users can configure reseller homepage.</Alert>}
-
           {isPpaUser && (
             <ResellerCustomHomepageCard
               key={`${company.id}-${resellerHomepageConfig?.updatedAt || 'none'}`}
@@ -741,6 +845,8 @@ function CompanyDetails() {
               globalLoading={homepageConfigLoading}
             />
           )}
+
+          {!isPpaUser && <ResellerCustomHomepageReadOnlyCard config={resellerHomepageConfig} loading={homepageConfigLoading} />}
         </Box>
       )}
 
